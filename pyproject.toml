@@ -49,6 +49,7 @@ packages = ["src/sonicagent_rt"]
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"
 testpaths = ["tests"]
+pythonpath = ["src"]
 markers = ["integration: integration tests", "e2e: end-to-end tests", "performance: performance tests"]
 
 [tool.ruff]
