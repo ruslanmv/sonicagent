@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "SonicAgent API",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "sonicagent_rt.app:app",
+        "--reload"
+      ]
+    }
+  ]
+}

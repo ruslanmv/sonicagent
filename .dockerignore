@@ -1,0 +1,12 @@
+.git
+.github
+.venv
+node_modules
+clients/web/dist
+models
+model-cache
+.cache
+outputs
+recordings
+transcripts
+benchmarks/results

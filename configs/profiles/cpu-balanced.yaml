@@ -1,0 +1,3 @@
+profile: cpu-balanced
+status: placeholder
+# TODO: pin providers, models, worker counts, and queue limits after benchmark validation.

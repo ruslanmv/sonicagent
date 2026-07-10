@@ -1,0 +1,18 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.cpu
+    env_file: .env
+    ports: ["8000:8000"]
+    volumes:
+      - model-cache:/home/sonic/.cache/SonicAgent
+  web:
+    image: node:20-alpine
+    working_dir: /workspace/clients/web
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    volumes: [".:/workspace"]
+    ports: ["5173:5173"]
+    depends_on: [api]
+volumes:
+  model-cache:

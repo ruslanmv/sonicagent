@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "profiles": {
+    "english-demo": {
+      "voice": "en_US-lessac-medium",
+      "stt": "whisper-small"
+    },
+    "italian-demo": {
+      "voice": "it_IT-paola-medium",
+      "stt": "whisper-small"
+    }
+  }
+}

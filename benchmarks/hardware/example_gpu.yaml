@@ -1,0 +1,5 @@
+os: Linux
+cpu: Replace with exact CPU model
+ram_gb: 32
+gpu: Replace with exact GPU and driver
+power_mode: performance

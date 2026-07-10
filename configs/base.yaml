@@ -1,0 +1,12 @@
+app:
+  environment: development
+  host: 0.0.0.0
+  port: 8000
+providers:
+  vad: silero
+  stt: faster-whisper
+  llm: mock
+  tts: piper
+privacy:
+  store_audio: false
+  store_transcripts: false

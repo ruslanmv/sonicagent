@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "SonicAgent"
+version = "0.0.0.dev0"
+description = "Real-time voice-agent gateway scaffold"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "GPL-3.0-or-later"}
+authors = [{name = "SonicAgent contributors"}]
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.30,<1",
+  "pydantic>=2.8,<3",
+  "pydantic-settings>=2.4,<3",
+  "httpx>=0.27,<1",
+  "structlog>=24.1,<26",
+  "prometheus-client>=0.20,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2,<9",
+  "pytest-asyncio>=0.23,<1",
+  "pytest-cov>=5,<7",
+  "mypy>=1.10,<2",
+  "ruff>=0.5,<1",
+  "jsonschema>=4.23,<5",
+]
+models = [
+  "onnxruntime>=1.18,<2",
+  "faster-whisper>=1.0,<2",
+  "numpy>=1.26,<3",
+]
+otel = [
+  "opentelemetry-api>=1.25,<2",
+  "opentelemetry-sdk>=1.25,<2",
+  "opentelemetry-exporter-otlp>=1.25,<2",
+]
+
+[project.scripts]
+SonicAgent = "sonicagent_rt.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sonicagent_rt"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers"
+testpaths = ["tests"]
+markers = ["integration: integration tests", "e2e: end-to-end tests", "performance: performance tests"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["sonicagent_rt"]

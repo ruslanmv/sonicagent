@@ -1,0 +1,6 @@
+# TODO: pin a CUDA runtime that matches the selected inference stack.
+FROM python:3.11-slim
+WORKDIR /app
+COPY . .
+RUN pip install --no-cache-dir '.[models]'
+CMD ["uvicorn", "sonicagent_rt.app:app", "--host", "0.0.0.0", "--port", "8000"]

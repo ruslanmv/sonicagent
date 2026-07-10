@@ -1,0 +1,5 @@
+extends: base.yaml
+logging:
+  level: DEBUG
+auth:
+  mode: development

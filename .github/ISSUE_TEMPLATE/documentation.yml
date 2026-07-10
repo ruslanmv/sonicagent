@@ -1,0 +1,18 @@
+name: Documentation
+description: Use this form for documentation.
+title: ""
+labels: ["status:needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not include secrets, private audio, or transcripts."
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction or proposal

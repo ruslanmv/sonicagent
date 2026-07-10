@@ -1,0 +1,4 @@
+* @your-org/maintainers
+/src/sonicagent_rt/protocol/ @your-org/protocol-maintainers
+/model_registry/ @your-org/model-maintainers
+/.github/ @your-org/maintainers

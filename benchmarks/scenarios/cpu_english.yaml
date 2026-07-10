@@ -1,0 +1,5 @@
+name: cpu_english
+status: placeholder
+warmup_runs: 3
+measured_runs: 20
+# TODO: pin hardware profile, providers, models, dataset, and pass/fail thresholds.

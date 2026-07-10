@@ -1,0 +1,11 @@
+site_name: SonicAgent
+site_description: Real-time voice-agent gateway scaffold
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Architecture: architecture.md
+  - Protocol: protocol.md
+  - Security: security.md
+  - Roadmap: roadmap.md

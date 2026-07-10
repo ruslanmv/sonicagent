@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "source": {
+    "name": "hp-piper-voices",
+    "base_url": "https://huggingface.co/ruslanmv/hp-piper-voices/resolve/main"
+  },
+  "voices": [
+    {
+      "id": "it_IT-paola-medium",
+      "display_name": "Paola",
+      "language": "it",
+      "locale": "it-IT",
+      "quality": "medium",
+      "model_path": "it/it_IT/paola/medium/it_IT-paola-medium.onnx",
+      "config_path": "it/it_IT/paola/medium/it_IT-paola-medium.onnx.json",
+      "model_sha256": "TODO",
+      "config_sha256": "TODO",
+      "license": "MIT",
+      "source_project": "Piper",
+      "status": "unverified-placeholder"
+    },
+    {
+      "id": "en_US-lessac-medium",
+      "display_name": "Lessac",
+      "language": "en",
+      "locale": "en-US",
+      "quality": "medium",
+      "model_path": "en/en_US/lessac/medium/en_US-lessac-medium.onnx",
+      "config_path": "en/en_US/lessac/medium/en_US-lessac-medium.onnx.json",
+      "model_sha256": "TODO",
+      "config_sha256": "TODO",
+      "license": "MIT",
+      "source_project": "Piper",
+      "status": "unverified-placeholder"
+    }
+  ]
+}

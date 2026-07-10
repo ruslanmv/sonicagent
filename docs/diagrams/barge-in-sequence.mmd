@@ -1,0 +1,7 @@
+sequenceDiagram
+  participant C as Client
+  participant S as Server
+  S-->>C: assistant audio
+  C->>S: microphone speech
+  S->>S: cancel LLM/TTS and purge queue
+  S-->>C: response.cancelled

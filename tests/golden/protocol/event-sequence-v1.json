@@ -1,0 +1,12 @@
+[
+  "session.created",
+  "speech.started",
+  "speech.stopped",
+  "transcript.final",
+  "response.created",
+  "response.text.delta",
+  "response.text.done",
+  "response.audio.started",
+  "response.audio.done",
+  "metrics.turn"
+]

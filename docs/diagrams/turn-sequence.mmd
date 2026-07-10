@@ -1,0 +1,7 @@
+sequenceDiagram
+  participant C as Client
+  participant S as Server
+  C->>S: binary microphone frames
+  S-->>C: transcript.final
+  S-->>C: response.text.delta
+  S-->>C: binary assistant frames

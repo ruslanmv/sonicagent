@@ -1,0 +1,6 @@
+extends: base.yaml
+providers:
+  vad: fake
+  stt: fake
+  llm: mock
+  tts: fake

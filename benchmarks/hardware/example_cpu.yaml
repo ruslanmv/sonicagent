@@ -1,0 +1,5 @@
+os: Linux
+cpu: Replace with exact CPU model
+ram_gb: 16
+gpu: null
+power_mode: performance

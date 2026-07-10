@@ -1,0 +1,11 @@
+{
+  "name": "SonicAgent",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "forwardPorts": [
+    8000,
+    5173
+  ]
+}
