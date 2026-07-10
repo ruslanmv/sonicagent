@@ -1,20 +1,25 @@
-.PHONY: bootstrap dev test lint format typecheck test-contract test-integration web-install web-dev web-test benchmark-smoke models-min clean
+.PHONY: install run test lint format typecheck test-contract test-integration web-install web-dev web-test smoke benchmark-smoke models-min models-verify clean
 
-bootstrap:
+install:
 	python -m pip install -e '.[dev]'
-	@if command -v npm >/dev/null 2>&1; then cd clients/web && npm install; else echo "npm not found; skipping web dependencies"; fi
+	cd clients/web && npm ci
 
-dev:
-	uvicorn sonicagent_rt.app:app --reload --host 0.0.0.0 --port 8000
+run:
+	@echo "Starting SonicAgent-RT backend on :8000 and web demo on :5173"
+	@(uvicorn sonicagent_rt.app:app --reload --host 0.0.0.0 --port 8000 & echo $$! > .sonicagent-backend.pid) ; \
+	 cd clients/web && npm run dev -- --host 0.0.0.0
 
 test:
 	pytest tests/unit tests/contract
+	cd clients/web && npm test -- --run
 
 lint:
 	ruff check src tests benchmarks scripts tools clients/python/src
+	cd clients/web && npm run lint
 
 format:
 	ruff format src tests benchmarks scripts tools clients/python/src
+	cd clients/web && npm run format -- --check
 
 typecheck:
 	mypy src/sonicagent_rt
@@ -26,19 +31,22 @@ test-integration:
 	pytest tests/integration
 
 web-install:
-	cd clients/web && npm install
+	cd clients/web && npm ci
 
 web-dev:
 	cd clients/web && npm run dev
 
 web-test:
-	cd clients/web && npm test
+	cd clients/web && npm test -- --run
 
-benchmark-smoke:
-	python -m benchmarks.cli --scenario scaffold
+smoke benchmark-smoke:
+	python -m benchmarks.cli --scenario benchmarks/scenarios/short_commands.yaml --providers fake --output benchmarks/results/smoke.json
 
 models-min:
-	@echo "Model downloads are disabled in the scaffold. Review registry hashes and implement scripts first."
+	python scripts/download_default_models.py --cache-dir "$${SONIC_MODEL_CACHE_DIR:-$$HOME/.cache/sonicagent-rt}" --minimal
+
+models-verify:
+	python scripts/verify_model_checksums.py --registry model_registry
 
 clean:
-	rm -rf .pytest_cache .mypy_cache .ruff_cache htmlcov dist build clients/web/dist
+	rm -rf .pytest_cache .mypy_cache .ruff_cache htmlcov dist build clients/web/dist benchmarks/results/smoke.json

@@ -3,9 +3,9 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "SonicAgent"
+name = "sonicagent-rt"
 version = "0.0.0.dev0"
-description = "Real-time voice-agent gateway scaffold"
+description = "Real-time voice-agent gateway"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "GPL-3.0-or-later"}
@@ -41,7 +41,7 @@ otel = [
 ]
 
 [project.scripts]
-SonicAgent = "sonicagent_rt.cli:main"
+sonicagent-rt = "sonicagent_rt.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/sonicagent_rt"]
