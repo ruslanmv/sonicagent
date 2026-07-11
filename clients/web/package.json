@@ -1,5 +1,5 @@
 {
-  "name": "SonicAgent-web",
+  "name": "sonicagent-rt-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "test": "vitest run",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "format": "tsc --noEmit"
   },
   "dependencies": {},
   "devDependencies": {

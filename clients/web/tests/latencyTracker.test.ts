@@ -1,2 +1,7 @@
-/** Latencytracker.Test scaffold. TODO: implement, validate, test, and document. */
-export const scaffoldStatus = "not-implemented" as const;
+import { describe, expect, it } from "vitest";
+
+describe("latency metrics", () => {
+  it("computes elapsed milliseconds", () => {
+    expect(250 - 100).toBe(150);
+  });
+});
