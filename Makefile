@@ -1,4 +1,4 @@
-.PHONY: install run test lint format typecheck test-contract test-integration web-install web-dev web-test smoke benchmark-smoke models-min models-verify clean
+.PHONY: install run test lint format typecheck test-contract test-integration web-install web-dev web-test docs-build smoke benchmark-smoke models-min models-verify clean
 
 install:
 	python -m pip install --no-build-isolation --no-deps -e .
@@ -39,6 +39,9 @@ web-dev:
 
 web-test:
 	cd clients/web && npm test -- --run
+
+docs-build:
+	mkdocs build --strict
 
 smoke benchmark-smoke:
 	python -m benchmarks.cli --scenario benchmarks/scenarios/short_commands.yaml --providers fake --output benchmarks/results/smoke.json

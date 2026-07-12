@@ -1,16 +1,42 @@
 # Deployment
 
-This document is part of the SonicAgent production roadmap.
+Deployment means running SonicAgent-RT somewhere other people or systems can use
+it. The current repository is for development and testing, not production use.
 
-## Purpose
+## Local development
 
-TODO: replace this placeholder with reviewed implementation and operational guidance.
+Use this while building or trying the app:
 
-## Required content before v1.0
+```bash
+make install
+make run
+```
 
-- Scope, assumptions, and non-goals.
-- Interfaces and configuration.
-- Failure modes and recovery.
-- Security and privacy implications.
-- Tests, metrics, and acceptance criteria.
-- Links to source modules and ADRs.
+## Container development
+
+A Docker Compose file is included for local experiments:
+
+```bash
+docker compose config
+docker compose up --build
+```
+
+## Production requirements
+
+Before production deployment, prepare:
+
+- TLS/HTTPS in front of the API and WebSocket.
+- Real authentication and short-lived session tokens.
+- An allowlist for browser origins.
+- Rate limits and session concurrency limits.
+- A persistent model cache outside Git.
+- Monitoring for errors, latency, and resource usage.
+- A rollback plan.
+- A privacy review for audio and transcript handling.
+
+## Do not deploy yet if
+
+- `make run` cannot start the backend.
+- Tests still show placeholder-only skips.
+- Runtime dependencies are missing.
+- Model checksums and licenses are not verified.

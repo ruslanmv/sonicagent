@@ -1,16 +1,39 @@
-## Security baseline
+# Security and privacy
 
-Before production deployment, complete the controls described in [`SECURITY.md`](SECURITY.md) and [`docs/security.md`](docs/security.md):
+SonicAgent-RT handles microphone audio and generated text. Treat both as private
+unless the user clearly agrees otherwise.
 
-- TLS termination and secure WebSocket transport.
-- Short-lived, audience-bound session tokens.
-- Origin allowlist and authenticated session creation.
-- Bounded payload size, frame rate, session duration, and concurrent sessions.
-- Per-tenant isolation and rate limiting.
-- No shell interpolation for model or provider arguments.
+## Development safety
+
+Do not expose the local development server to the public internet. Development
+settings are for local testing only.
+
+## Required production controls
+
+Before production use, implement and verify:
+
+- HTTPS/TLS for all browser and API traffic.
+- Secure WebSocket connections.
+- Short-lived session tokens.
+- Browser origin allowlists.
+- Request-size and audio-frame-size limits.
+- Rate limits and concurrency limits.
+- Redacted logs.
+- Opt-in audio/transcript storage.
 - Dependency, container, license, secret, and SBOM scanning.
-- Redacted logs and opt-in storage.
 - Threat-model review for untrusted audio, text, model files, and provider output.
 
-The scaffold development token is not safe for public networks.
+## Simple privacy defaults
 
+Recommended defaults:
+
+| Data | Default |
+| --- | --- |
+| Audio storage | Off |
+| Transcript storage | Off |
+| Transcript logging | Off |
+| Secrets in logs | Never |
+
+## If you are unsure
+
+Keep the service local, use fake providers, and do not process private audio.
