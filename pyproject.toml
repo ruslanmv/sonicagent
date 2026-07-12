@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling>=1.25"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "sonicagent-rt"
@@ -28,6 +28,7 @@ dev = [
   "mypy>=1.10,<2",
   "ruff>=0.5,<1",
   "jsonschema>=4.23,<5",
+  "mkdocs>=1.6,<2",
 ]
 models = [
   "onnxruntime>=1.18,<2",
@@ -43,8 +44,8 @@ otel = [
 [project.scripts]
 sonicagent-rt = "sonicagent_rt.cli:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/sonicagent_rt"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"

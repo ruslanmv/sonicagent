@@ -1,12 +1,13 @@
-.PHONY: install run test lint format typecheck test-contract test-integration web-install web-dev web-test smoke benchmark-smoke models-min models-verify clean
+.PHONY: install run test lint format typecheck test-contract test-integration web-install web-dev web-test docs-build smoke benchmark-smoke models-min models-verify clean
 
 install:
-	python -m pip install -e '.[dev]'
+	python -m pip install --no-build-isolation --no-deps -e .
+	python scripts/check_runtime_dependencies.py
 	cd clients/web && npm ci
 
 run:
 	@echo "Starting SonicAgent-RT backend on :8000 and web demo on :5173"
-	@(uvicorn sonicagent_rt.app:app --reload --host 0.0.0.0 --port 8000 & echo $$! > .sonicagent-backend.pid) ; \
+	@(python -m sonicagent_rt --reload --host 0.0.0.0 --port 8000 & echo $$! > .sonicagent-backend.pid) ; \
 	 cd clients/web && npm run dev -- --host 0.0.0.0
 
 test:
@@ -38,6 +39,9 @@ web-dev:
 
 web-test:
 	cd clients/web && npm test -- --run
+
+docs-build:
+	mkdocs build --strict
 
 smoke benchmark-smoke:
 	python -m benchmarks.cli --scenario benchmarks/scenarios/short_commands.yaml --providers fake --output benchmarks/results/smoke.json

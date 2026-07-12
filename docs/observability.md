@@ -1,16 +1,37 @@
 # Observability
 
-This document is part of the SonicAgent production roadmap.
+Observability means knowing what the system is doing without reading private user
+content.
 
-## Purpose
+## What to measure
 
-TODO: replace this placeholder with reviewed implementation and operational guidance.
+For each voice turn, SonicAgent-RT should measure:
 
-## Required content before v1.0
+- Time until speech starts.
+- Time until speech stops.
+- Speech-to-text latency.
+- Time to first text token.
+- Time to first stable phrase.
+- Text-to-speech latency.
+- Time to first assistant audio.
+- Barge-in cancellation time.
+- Total turn time.
 
-- Scope, assumptions, and non-goals.
-- Interfaces and configuration.
-- Failure modes and recovery.
-- Security and privacy implications.
-- Tests, metrics, and acceptance criteria.
-- Links to source modules and ADRs.
+## Privacy rule
+
+Metrics should not include private audio or transcript content unless the user or
+operator explicitly enables storage and logging.
+
+## Metrics endpoint
+
+Prometheus-style metrics are exposed at:
+
+```text
+/metrics
+```
+
+## Beginner interpretation
+
+If latency feels high, check whether the delay is from speech detection, speech
+to text, the text model, text to speech, or browser playback. Each stage needs a
+separate metric so operators know where to look.
