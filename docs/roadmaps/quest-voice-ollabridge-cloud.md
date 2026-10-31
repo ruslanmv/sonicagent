@@ -207,7 +207,7 @@ If eligible, prototype a Docker Space that serves FastAPI on the supported port 
 
 ## 11. Failure and rollback behavior
 
-- `SONIC_VOICE_ENABLED=false` on SonicAgent or `OLLBRIDGE_VOICE_ENABLED=false` (proposed switch; name subject to final conventions) at gateway layer disables new APIs without affecting chat.
+- `SONIC_VOICE_ENABLED=false` on SonicAgent or `OLLABRIDGE_VOICE_ENABLED=false` (proposed switch; name subject to final conventions) at gateway layer disables new APIs without affecting chat.
 - Cloud voice routes only advertised when linked device explicitly declares `sonicagent.stt` / `sonicagent.tts` and real backend readiness succeeds. Older OllaBridge versions remain supported for text/chat.
 - On error, clean tracks, audio contexts, sockets, recordings, timers and queued speech; surface status + text input. Never automatically downgrade private STT to proprietary browser recognition.
 - Preserve API v1 compatibility and backwards-compatible capability additions; all new routes additive. Deployment must support rollback independently per repository.
