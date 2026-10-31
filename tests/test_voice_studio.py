@@ -1,7 +1,6 @@
 """Voice Studio integration tests; no model downloads or inference required."""
 from pathlib import Path
 
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,3 +78,22 @@ def test_demo_disabled_does_not_bypass_auth(monkeypatch):
         assert exc.status_code == 404
     else:
         raise AssertionError("disabled demo permitted anonymous access")
+
+
+def test_hf_entrypoint_serves_voice_studio_and_keeps_api():
+    """Test root routing without starting the heavyweight STT model lifespan."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("sonicagent_hf_ui_app", ROOT / "hf" / "app.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    client = TestClient(module.app)  # no context manager: avoids inference startup
+    index = client.get("/")
+    assert index.status_code == 200
+    assert "Voice Studio" in index.text
+    assert client.get("/ui-assets/app.js").status_code == 200
+    assert client.get("/ui-assets/style.css").status_code == 200
+    assert client.get("/api-info").json()["service"] == "sonicagent"
+    assert client.get("/health/live").json()["status"] == "ok"
+    assert client.get("/demo/status").json()["enabled"] is False
+    assert client.post("/demo/transcriptions", headers={"X-Sonic-Demo-UI": "1"}).status_code in (404, 422)
