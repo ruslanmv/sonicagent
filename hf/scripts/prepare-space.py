@@ -72,7 +72,8 @@ def stage(source: Path, destination: Path) -> list[str]:
         written.append(dest.relative_to(destination).as_posix())
     _copy_tree(source / "src", destination / "src")
     _copy_tree(source / "model_registry", destination / "model_registry")
-    written.extend(["src", "model_registry"])
+    _copy_tree(source / "hf" / "ui", destination / "hf" / "ui")
+    written.extend(["src", "model_registry", "hf/ui"])
     validate(destination)
     return written
 
@@ -94,6 +95,9 @@ def validate(destination: Path) -> None:
     text = engine.read_text(encoding="utf-8")
     if "WhisperModel" not in text:
         raise SystemExit("staged package does not include the Whisper engine")
+    for name in ("index.html", "style.css", "app.js"):
+        if not (destination / "hf" / "ui" / name).is_file():
+            raise SystemExit(f"staged Space lacks frontend {name}")
     for path in destination.rglob("*"):
         if not path.is_file() and path.name in EXCLUDED_PARTS:
             raise SystemExit(f"staging contains excluded directory {path}")
