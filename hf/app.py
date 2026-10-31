@@ -19,17 +19,25 @@ app = create_app()
 app.include_router(demo_router)
 
 UI_DIR = Path(__file__).resolve().parent / "ui"
-if UI_DIR.is_dir():
-    # The core health router has a JSON GET /. Replace it only for the Space
-    # entrypoint. Leave /health/* and /v1/* unchanged.
-    app.router.routes[:] = [
-        route for route in app.router.routes
-        if not (
-            isinstance(route, APIRoute)
-            and route.path == "/"
-            and "GET" in route.methods
-        )
+def _prefer_route(path: str) -> None:
+    """Match a Space route before included routers.
+
+    Current FastAPI keeps included routers as ``_IncludedRouter`` objects, so
+    filtering only top-level ``APIRoute`` entries leaves the JSON ``GET /``
+    from the health router in front of the Voice Studio page.
+    """
+    chosen = [
+        route
+        for route in app.router.routes
+        if isinstance(route, APIRoute) and route.path == path and "GET" in route.methods
     ]
+    if not chosen:
+        return
+    rest = [route for route in app.router.routes if route not in chosen]
+    app.router.routes[:] = [*chosen, *rest]
+
+
+if UI_DIR.is_dir():
     app.mount("/ui-assets", StaticFiles(directory=UI_DIR), name="voice-studio-assets")
 
     @app.get("/", include_in_schema=False)
@@ -48,6 +56,8 @@ if UI_DIR.is_dir():
             "capabilities": "/v1/audio/capabilities",
             "ui": "/",
         }
+
+    _prefer_route("/")
 
 
 def main() -> None:
