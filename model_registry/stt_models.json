@@ -2,14 +2,49 @@
   "schema_version": 1,
   "models": [
     {
+      "id": "whisper-tiny",
+      "provider": "faster-whisper",
+      "upstream": "Systran/faster-whisper-tiny",
+      "openai_upstream": "openai/whisper-tiny",
+      "revision": "d90ca5fe260221311c53c58e660288d3deb8d356",
+      "model_bin_sha256": "dcb76c6586fc06cbdac6dd21f14cfd129cc4cdd9dce19bf4ffa62e59cbe6e6d1",
+      "size": "tiny",
+      "languages": ["en", "it"],
+      "multilingual": true,
+      "device_profiles": ["cpu-int8", "gpu-float16"],
+      "license": "MIT",
+      "license_notes": "OpenAI Whisper weights and the Systran CTranslate2 conversion are MIT. faster-whisper and CTranslate2 are MIT. Hugging Face is an optional download mirror, not required when model.bin is already on disk.",
+      "status": "pinned"
+    },
+    {
+      "id": "whisper-base",
+      "provider": "faster-whisper",
+      "upstream": "Systran/faster-whisper-base",
+      "openai_upstream": "openai/whisper-base",
+      "revision": null,
+      "model_bin_sha256": null,
+      "size": "base",
+      "languages": ["en", "it"],
+      "multilingual": true,
+      "device_profiles": ["cpu-int8", "gpu-float16"],
+      "license": "MIT",
+      "license_notes": "Metadata only until this checkpoint is downloaded and its checksum is pinned. Do not advertise it as ready when whisper-tiny is the loaded model.",
+      "status": "metadata"
+    },
+    {
       "id": "whisper-small",
       "provider": "faster-whisper",
-      "upstream": "openai/whisper-small",
-      "device_profiles": [
-        "cpu-int8",
-        "gpu-fp16"
-      ],
-      "status": "placeholder"
+      "upstream": "Systran/faster-whisper-small",
+      "openai_upstream": "openai/whisper-small",
+      "revision": null,
+      "model_bin_sha256": null,
+      "size": "small",
+      "languages": ["en", "it"],
+      "multilingual": true,
+      "device_profiles": ["cpu-int8", "gpu-float16"],
+      "license": "MIT",
+      "license_notes": "Metadata only. Heavier than the default tiny checkpoint and not loaded unless configured.",
+      "status": "metadata"
     }
   ]
 }

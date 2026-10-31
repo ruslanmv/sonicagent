@@ -1,0 +1,51 @@
+# Local CPU voice service. The container listens on 7860, the same port as
+# the Hugging Face Space. The host port defaults to 8000.
+#
+#   docker compose -f hf/docker-compose.yml up --build
+#
+# Set SONIC_API_KEY in the shell or in hf/.env. Compose reads hf/.env for
+# interpolation because this file lives in hf/.
+
+services:
+  sonicagent:
+    build:
+      context: ..
+      dockerfile: hf/Dockerfile
+      args:
+        BUNDLE_STT_MODEL: ${BUNDLE_STT_MODEL:-1}
+    image: sonicagent-voice:local
+    ports:
+      - "${SONIC_PUBLISH_PORT:-8000}:7860"
+    environment:
+      SONIC_API_KEY: ${SONIC_API_KEY:-}
+      SONIC_ENVIRONMENT: ${SONIC_ENVIRONMENT:-development}
+      SONIC_AUTH_MODE: ${SONIC_AUTH_MODE:-development}
+      SONIC_ALLOWED_ORIGINS: ${SONIC_ALLOWED_ORIGINS:-http://localhost:5173}
+      SONIC_STT_PROVIDER: faster-whisper
+      SONIC_STT_MODEL: ${SONIC_STT_MODEL:-tiny}
+      SONIC_STT_DEVICE: cpu
+      SONIC_STT_COMPUTE_TYPE: int8
+      SONIC_STT_LANGUAGE: ${SONIC_STT_LANGUAGE:-auto}
+      SONIC_STT_WARMUP: ${SONIC_STT_WARMUP:-true}
+      SONIC_STT_ALLOW_DOWNLOAD: ${SONIC_STT_ALLOW_DOWNLOAD:-false}
+      SONIC_STT_MAX_CONCURRENCY: ${SONIC_STT_MAX_CONCURRENCY:-2}
+      SONIC_MAX_AUDIO_SECONDS: ${SONIC_MAX_AUDIO_SECONDS:-15}
+      SONIC_MAX_UPLOAD_BYTES: ${SONIC_MAX_UPLOAD_BYTES:-2097152}
+      SONIC_TTS_ENABLED: ${SONIC_TTS_ENABLED:-false}
+      SONIC_MODEL_CACHE_DIR: /home/user/.cache/sonicagent-rt
+      SONIC_STORE_AUDIO: "false"
+      SONIC_STORE_TRANSCRIPTS: "false"
+      SONIC_LOG_TRANSCRIPT_CONTENT: "false"
+      PORT: "7860"
+    volumes:
+      - sonicagent-models:/home/user/.cache/sonicagent-rt
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "deploy/docker/healthcheck.py"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  sonicagent-models:

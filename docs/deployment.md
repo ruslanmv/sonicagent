@@ -21,6 +21,14 @@ docker compose config
 docker compose up --build
 ```
 
+The speech image is the one under `hf/`. It listens on container port 7860 and is published locally as `http://127.0.0.1:8000`:
+
+```bash
+docker compose -f hf/docker-compose.yml up --build
+```
+
+The same Dockerfile is what `hf/scripts/deploy-space.sh` stages for the existing Space `ruslanmv/SonicAgent`. See `hf/README.md` for Windows PowerShell, secrets, rollback, and the difference between `/health/live` and `/health/ready`. The root Compose file does not start Whisper.
+
 ## Production requirements
 
 Before production deployment, prepare:
