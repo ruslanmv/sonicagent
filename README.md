@@ -364,7 +364,7 @@ Run the deterministic scaffold benchmark:
 make benchmark-smoke
 ```
 
-Real-model benchmark commands remain disabled until providers are implemented and model hashes are pinned.
+Measure a running speech API, including the Hugging Face Space, with `make benchmark-endpoints`. The probe records client-observed time for health, preset audio, synthesis, and transcription. See [`benchmarks/README.md`](benchmarks/README.md). Those figures describe the measured host. They are not a VR headset result and not a service level.
 
 ## Testing
 
