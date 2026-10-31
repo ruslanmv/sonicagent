@@ -1,43 +1,88 @@
 # SonicAgent
 
-> **Repository scaffold:** this archive contains the complete project structure, interfaces, configuration, CI templates, documentation map, tests, examples, and implementation placeholders. Model inference and production hardening are intentionally marked as TODOs.
+Self-hosted speech for products that should not send customer audio to a metered speech API.
 
-SonicAgent is an open-source, server-side real-time voice-agent gateway designed to receive microphone audio over a binary WebSocket, detect speech, transcribe locally, stream an LLM response, synthesize stable phrases with Piper, and return PCM audio while supporting interruption and cancellation.
+SonicAgent transcribes speech and returns a WAV with one authenticated HTTP API. The same service runs on your own CPU and on a Hugging Face Docker Space. Audio and transcripts are not stored by default. There is no Google, Azure, or OpenAI speech key.
 
 <p align="center">
   <img src="assets/branding/logo.svg" width="520" alt="SonicAgent logo">
 </p>
 
+<p align="center">
+  <a href="https://huggingface.co/spaces/ruslanmv/SonicAgent">Voice Studio</a>
+  ·
+  <a href="https://github.com/ruslanmv/sonicagent/blob/plan/quest-voice-ollabridge-cloud/docs/roadmaps/quest-voice-ollabridge-cloud.md">Quest and OllaBridge plan</a>
+  ·
+  <a href="hf/README.md">Deploy locally or on Hugging Face</a>
+</p>
+
+## Where it creates impact
+
+Teams adopt a speech stack when it is private, predictable, and cheap to run. SonicAgent is that layer:
+
+- **Own the audio path.** Microphone audio goes to infrastructure you operate. The default is to discard the recording and the transcript after the response.
+- **Remove the speech-API bill.** Recognition is multilingual Whisper Tiny on CPU. Speech is open Piper, not a per-character vendor.
+- **One contract, two hosts.** Local Docker and the Hugging Face Space `ruslanmv/SonicAgent` serve the same routes. A product can start on Hugging Face and move to a private machine without a second client.
+- **Voices for the product, not a demo gimmick.** Each supported locale has a female **Companion** profile (warmer, slower, for an adult companion) and a female **Secretary** profile (clearer, slightly faster, for work). These are published Piper voices with explicit synthesis settings. They are not a separate expressive-speech model, and they are not a claim about how a person should sound.
+
+Use it for a support desk, a private assistant, a WebXR companion, or an internal tool that must keep recordings off a third-party speech vendor.
+
+## What you can run today
+
+| Capability | Status |
+| --- | --- |
+| Batch speech to text | Whisper Tiny, CPU INT8. English, Spanish, French, German, Italian, Portuguese. |
+| Batch text to speech | Piper WAV. Female Companion and Secretary profiles for every locale below except Portuguese. |
+| Voice Studio | Browser page on the Hugging Face Space and in the voice image. |
+| Access control | Bearer token on `/v1/audio/*`. Optional bounded public demo, off unless you enable it. |
+| Privacy defaults | No stored audio, no stored transcripts, no transcript text in logs. |
+| Realtime calls, VAD, barge-in, streaming LLM | Designed, not implemented. Do not quote latency from this repository. |
+
+Portuguese listening works. Portuguese speech is not in this catalog: the voices published for Portuguese on the Hugging Face mirror are male, and this project does not present them as female.
+
+## Voices
+
+Source mirror: [`ruslanmv/hp-piper-voices`](https://huggingface.co/ruslanmv/hp-piper-voices). The selectable ids live in [`model_registry/voices.json`](model_registry/voices.json).
+
+| Locale | Companion | Secretary |
+| --- | --- | --- |
+| English (US) | Kristin | Lessac |
+| English (UK) | Cori | Alba |
+| Spanish (Spain) | Sharvard, female speaker | Sharvard, female speaker |
+| Spanish (Mexico) | Ald | Ald |
+| French | Jessica | Siwis |
+| German | Eva K, lighter model | Kerstin, lighter model |
+| Italian | Paola | Paola |
+
+Spain uses speaker `F` of the two-speaker Sharvard model. The other speaker is male and is not offered. French Companion uses the Jessica speaker of the UPMC model. When a locale has one female voice, Companion and Secretary share that file and differ by pace and noise: Companion is slower and softer; Secretary is a little faster and steadier.
+
 ## Project status
 
-| Area | Scaffold | Reference implementation | Production ready |
+| Area | Scaffold | What runs now | Production ready |
 |---|---:|---:|---:|
 | Repository architecture | ✅ | ✅ | — |
 | Binary protocol definitions | ✅ | Partial | No |
-| FastAPI application | ✅ | Minimal | No |
-| Browser client | ✅ | Minimal | No |
+| FastAPI application | ✅ | Speech HTTP API and Voice Studio | No |
+| Browser client | ✅ | Voice Studio. Realtime worklet is still a scaffold | No |
 | Silero VAD | ✅ | Placeholder | No |
-| faster-whisper STT | ✅ | Batch CPU Tiny, English and Italian | No |
+| faster-whisper STT | ✅ | Batch CPU Tiny, six languages | No |
 | LLM providers | ✅ | Mock included | No |
-| Piper TTS | ✅ | Placeholder | No |
+| Piper TTS | ✅ | Batch WAV, female Companion and Secretary catalog | No |
 | Barge-in | ✅ | Interfaces only | No |
 | Benchmarks and telemetry | ✅ | Synthetic skeleton | No |
-| Containers and deployment | ✅ | `hf/` local and Space image | No |
+| Containers and deployment | ✅ | `hf/` local image and Hugging Face Space | No |
 
-The repository is deliberately honest about its maturity. Do not publish latency claims from this scaffold. Replace placeholders, run the real-model benchmark suite, document hardware, and complete the security checklist before production use.
+Do not publish latency claims from this repository. Finish the security checklist and measure a named machine before calling a deployment production.
 
-## Target capabilities
+## Direction
 
-- Binary PCM16 microphone and assistant audio over one WebSocket.
-- Authenticated, resumable sessions with sequence numbers and heartbeat events.
-- Server-side Silero VAD with configurable endpointing and pre-roll.
-- Local speech recognition through faster-whisper.
-- OpenAI-compatible and Ollama text-generation adapters.
-- Stable phrase segmentation and pipelined Piper synthesis.
-- Cooperative cancellation across LLM, TTS, playback, and queued audio.
-- English and Italian model profiles.
-- Per-stage latency metrics, traces, reproducible benchmarks, and regression checks.
-- Bounded queues, payload limits, origin controls, log redaction, and privacy defaults.
+The realtime gateway remains the long-term design: binary PCM from the browser, local transcription, a streaming language model, Piper phrases, and interruption. The shipping surface today is the batch API above. The realtime pieces stay in the repository so the contract does not drift while inference is added.
+
+- Authenticated sessions, sequence numbers, and cancellation tokens.
+- Server-side voice activity detection.
+- OpenAI-compatible and Ollama text adapters.
+- Phrase-pipelined playback and barge-in.
+- Per-stage timings, once they are measured rather than estimated.
 
 ## Architecture
 
@@ -108,8 +153,8 @@ A complete generated file map is available in [`PROJECT_TREE.md`](PROJECT_TREE.m
 ### Local development
 
 ```bash
-git clone https://github.com/your-org/SonicAgent.git
-cd SonicAgent
+git clone https://github.com/ruslanmv/sonicagent.git
+cd sonicagent
 cp .env.example .env
 make bootstrap
 make dev
@@ -131,13 +176,13 @@ The default provider profile uses a deterministic mock LLM and does not download
 docker compose up --build
 ```
 
-The root Compose file starts the API and web scaffold. The voice image, which runs real Whisper Tiny transcription on CPU, is separate:
+The root Compose file starts the API and web scaffold. The voice image, which runs Whisper Tiny and the Piper catalog on CPU, is separate:
 
 ```bash
 docker compose -f hf/docker-compose.yml up --build
 ```
 
-That serves `http://127.0.0.1:8000` and is documented in [`hf/README.md`](hf/README.md). Realtime WebSocket audio, Silero VAD, and Piper playback are still not the default path. GPU access, Redis, Prometheus, Grafana, and OpenTelemetry remain templates under `deploy/`.
+That serves `http://127.0.0.1:8000` and is documented in [`hf/README.md`](hf/README.md). The Voice Studio is the page at `/`. Realtime WebSocket audio and Silero VAD are not on this path. GPU access, Redis, Prometheus, Grafana, and OpenTelemetry remain templates under `deploy/`.
 
 ## Production implementation sequence
 
@@ -274,15 +319,13 @@ Example model path pattern:
 {lang}/{locale}/{speaker}/{quality}/{voice_id}.onnx.json
 ```
 
-Download scripts are placeholders until model hashes and redistribution review are finalized:
+The voice image downloads the female catalog during the build. Install the same files outside Docker with:
 
 ```bash
-python scripts/download_voice.py --voice it_IT-paola-medium
-python scripts/download_stt_model.py --model small
-python scripts/verify_model_checksums.py
+python hf/scripts/setup-models.py --model tiny --tts --cache-dir ~/.cache/sonicagent-rt
 ```
 
-The model cache defaults to `~/.cache/SonicAgent` and should be mounted as a persistent volume in deployments.
+Checksum placeholders in the registry are still `TODO`. Do not treat an unverified hash as a pin. The model cache should be a persistent volume in any deployment.
 
 ## Configuration
 
@@ -408,7 +451,7 @@ Suggested milestones:
 - A real faster-whisper transcript is produced.
 - LLM output is streamed and cancellable.
 - Piper audio begins before the complete text response is generated.
-- English and Italian demonstrations work from a clean checkout.
+- English, Spanish, French, German, Italian, and Portuguese listening work from a clean checkout. Companion and Secretary speech work where the female catalog has a voice.
 - Barge-in cancels LLM/TTS work and clears queued playback.
 - Queues remain bounded under slow clients and provider failures.
 - Benchmark reports include reproducible hardware and configuration metadata.

@@ -7,7 +7,7 @@ Use a physical Quest 3, an HTTPS Avatar page, and a SonicAgent deployment whose 
 ## Before the headset
 
 - [ ] `SONIC_API_KEY` is set only on OllaBridge or the Space secrets, not in the Avatar bundle.
-- [ ] Capabilities show `stt.ready: true` and languages `en` and `it`.
+- [ ] Capabilities show `stt.ready: true` and languages `en`, `es`, `fr`, `de`, `it`, and `pt`.
 - [ ] `tts.ready` is false unless a real Piper voice was installed and a WAV response was played on a desktop.
 - [ ] The LLM used for the reply is reachable with the Windows PC powered off, if that is the mode under test.
 - [ ] Private-voice mode does not fall back to browser `SpeechRecognition`.

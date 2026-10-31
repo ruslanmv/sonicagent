@@ -237,7 +237,7 @@ def test_invalid_truncated_and_unsupported_audio() -> None:
         language = client.post(
             "/v1/audio/transcriptions",
             headers=auth(),
-            data={"language": "fr"},
+            data={"language": "ja"},
             files={"file": ("a.wav", loud_wav(), "audio/wav")},
         )
         model = client.post(

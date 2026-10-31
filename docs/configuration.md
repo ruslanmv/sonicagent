@@ -22,7 +22,7 @@ Common settings:
 | `SONIC_STT_MODEL` | `tiny` | Multilingual Whisper size. `tiny.en` is rejected. |
 | `SONIC_STT_DEVICE` | `cpu` | `cpu`, `cuda`, `gpu`, or `auto`. CUDA is used only when a device exists. |
 | `SONIC_STT_COMPUTE_TYPE` | `int8` | CTranslate2 compute type on CPU. |
-| `SONIC_STT_LANGUAGE` | `auto` | Default language: `en`, `it`, or `auto`. |
+| `SONIC_STT_LANGUAGE` | `auto` | Default language: `en`, `es`, `fr`, `de`, `it`, `pt`, or `auto`. |
 | `SONIC_STT_ALLOW_DOWNLOAD` | `false` | Warmup may download weights only when this is true. |
 | `SONIC_API_KEY` | empty | Bearer secret for `/v1/audio/*`. Required. Never commit it. |
 | `SONIC_AUTH_MODE` | `development` | `token` or production requires a key of at least 24 characters. |

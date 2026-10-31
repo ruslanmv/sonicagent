@@ -22,6 +22,7 @@ from pydantic import BaseModel
 from sonicagent_rt.api.errors import error_response
 from sonicagent_rt.api.routes.audio import _transcription_body
 from sonicagent_rt.stt.errors import SpeechError
+from sonicagent_rt.tts.models import tts_language_supported
 
 router = APIRouter(tags=["public-demo"])
 DEMO_SECONDS = 8.0
@@ -144,7 +145,7 @@ async def speech(request: Request, body: DemoSpeechRequest):
         raise HTTPException(503, "Public Piper synthesis is disabled")
     if not body.text.strip() or len(body.text) > DEMO_TEXT_CHARS:
         raise HTTPException(422, "Text must contain 1–180 characters")
-    if body.format != "wav" or body.language not in {"en", "it"}:
+    if body.format != "wav" or not tts_language_supported(body.language):
         raise HTTPException(422, "Unsupported language or format")
     settings = request.app.state.settings
     cancel = Event()

@@ -1,27 +1,20 @@
 """Download the pinned multilingual Whisper checkpoint into the model cache.
 
-Optional Piper voices are downloaded only with ``--tts``. They are not loaded
-unless ``SONIC_TTS_ENABLED=true`` and both the ONNX file and its JSON config
-are present.
+Optional Piper voices are downloaded only with ``--tts``. The file list is the
+female catalog in ``model_registry/voices.json``, hosted on
+``ruslanmv/hp-piper-voices``. Files are not loaded unless ``SONIC_TTS_ENABLED``
+is true and both the ONNX file and its JSON config are present.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import urllib.request
 from pathlib import Path
 
-VOICE_FILES = {
-    "en_US-lessac-medium": (
-        "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx",
-        "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json",
-    ),
-    "it_IT-paola-medium": (
-        "https://huggingface.co/rhasspy/piper-voices/resolve/main/it/it_IT/paola/medium/it_IT-paola-medium.onnx",
-        "https://huggingface.co/rhasspy/piper-voices/resolve/main/it/it_IT/paola/medium/it_IT-paola-medium.onnx.json",
-    ),
-}
+VOICE_BASE = "https://huggingface.co/ruslanmv/hp-piper-voices/resolve/main"
 
 
 def _download(url: str, destination: Path) -> None:
@@ -34,13 +27,32 @@ def _download(url: str, destination: Path) -> None:
         destination.write_bytes(response.read())
 
 
+def _registry_path() -> Path:
+    here = Path(__file__).resolve()
+    candidates = [Path.cwd() / "model_registry" / "voices.json"]
+    if len(here.parents) > 2:
+        candidates.append(here.parents[2] / "model_registry" / "voices.json")
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    raise FileNotFoundError("model_registry/voices.json was not found")
+
+
 def install_voices(cache_dir: Path) -> None:
+    payload = json.loads(_registry_path().read_text(encoding="utf-8"))
+    base = str((payload.get("source") or {}).get("base_url") or VOICE_BASE).rstrip("/")
     voice_dir = cache_dir / "tts"
     voice_dir.mkdir(parents=True, exist_ok=True)
-    for voice_id, (model_url, config_url) in VOICE_FILES.items():
-        _download(model_url, voice_dir / f"{voice_id}.onnx")
-        _download(config_url, voice_dir / f"{voice_id}.onnx.json")
-        print(f"voice ready: {voice_id}")
+    seen: set[str] = set()
+    for item in payload.get("voices") or []:
+        model_path = str(item.get("model_path") or "")
+        config_path = str(item.get("config_path") or "")
+        if not model_path or model_path in seen:
+            continue
+        seen.add(model_path)
+        _download(f"{base}/{model_path}", voice_dir / Path(model_path).name)
+        _download(f"{base}/{config_path}", voice_dir / Path(config_path).name)
+        print(f"voice ready: {Path(model_path).stem}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -48,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model", default="tiny", help="Multilingual Whisper size. tiny.en is rejected.")
     parser.add_argument("--cache-dir", default="~/.cache/sonicagent-rt")
     parser.add_argument("--revision", default=None)
-    parser.add_argument("--tts", action="store_true", help="Also download optional Piper en/it voices")
+    parser.add_argument("--tts", action="store_true", help="Also download the female Piper voice catalog")
     args = parser.parse_args(argv)
     cache = Path(args.cache_dir).expanduser()
     from sonicagent_rt.stt.model_store import install_whisper_model

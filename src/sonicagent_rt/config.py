@@ -90,7 +90,7 @@ class Settings(BaseSettings if SettingsConfigDict is not None else _FallbackSett
     stt_model_path: str = ""
     stt_allow_download: bool = False
     stt_warmup: bool = False
-    stt_languages: str = "en,it"
+    stt_languages: str = "en,es,fr,de,it,pt"
     stt_vad_filter: bool = False
     stt_beam_size: int = 5
     stt_cpu_threads: int = 4

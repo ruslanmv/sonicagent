@@ -57,8 +57,8 @@ These paths are **proposed** and must be exposed **consistently** by both OllaBr
 ```json
 {
   "version": 1,
-  "stt": {"available": true, "ready": true, "mode": "device-relay", "languages": ["en", "it"], "models": ["whisper-tiny", "whisper-base"], "max_seconds": 15},
-  "tts": {"available": true, "ready": true, "voices": ["en_US-lessac-medium", "it_IT-paola-medium"]},
+  "stt": {"available": true, "ready": true, "mode": "device-relay", "languages": ["en", "es", "fr", "de", "it", "pt"], "models": ["whisper-tiny"], "max_seconds": 15},
+  "tts": {"available": true, "ready": true, "voices": ["en_US-lessac-medium", "en_US-kristin-medium", "it_IT-paola-medium", "it_IT-paola-companion"]}
   "realtime": {"available": false, "ready": false, "reason": "not-implemented"},
   "route": {"location": "paired-device", "device_id": "opaque-alias"}
 }
@@ -68,7 +68,7 @@ These paths are **proposed** and must be exposed **consistently** by both OllaBr
 
 ### 4.2 Transcription
 
-`POST /v1/audio/transcriptions`: `multipart/form-data` with one audio file, `language=en|it|auto`, optional `model`, `request_id`; support `audio/webm;codecs=opus` when decodable, or `audio/wav` PCM. Echo cancel and sample-rate negotiation are browser/encoder settings, not server assumptions.
+`POST /v1/audio/transcriptions`: `multipart/form-data` with one audio file, `language=en|es|fr|de|it|pt|auto`, optional `model`, `request_id`; support `audio/webm;codecs=opus` when decodable, or `audio/wav` PCM. Echo cancel and sample-rate negotiation are browser/encoder settings, not server assumptions.
 
 ```json
 {
@@ -88,6 +88,8 @@ These paths are **proposed** and must be exposed **consistently** by both OllaBr
 ### 4.3 Speech synthesis
 
 `POST /v1/audio/speech`: JSON `{text, voice, language, format:"wav", request_id}`, constrained text length (e.g. 2,000 characters), output `audio/wav` plus bounded metadata headers, or a versioned JSON response if routing through an existing JSON-only relay.
+
+**Hugging Face voice catalog.** Speech on the Space uses female Piper voices already published in [`ruslanmv/hp-piper-voices`](https://huggingface.co/ruslanmv/hp-piper-voices): English (US and UK), Spanish (Spain and Mexico), French, German, and Italian. Each locale has two profiles. **Companion** is slower and softer, for an adult companion. **Secretary** is clearer and slightly faster, for work. Where the mirror has only one female speaker, both profiles share that model and differ by synthesis settings. Spanish (Spain) must use Sharvard speaker `F` (speaker id 1); speaker 0 is male. French Companion uses UPMC speaker `jessica` (speaker id 0). German Companion (Eva K) and Secretary (Kerstin) are the female voices in the mirror; they are lighter, lower-quality models. Portuguese listening is in scope because Whisper Tiny supports it. Portuguese speech is not: Faber and Edresson are male, and this catalog does not relabel them as female. The canonical list is [`model_registry/voices.json`](../../model_registry/voices.json).
 
 **Do not replace** the Avatar's working Piper TTS. Optional remote speech must route decoded audio through existing lip-sync/audio-state tracking, with `turn_id` preventing out-of-date playback.
 

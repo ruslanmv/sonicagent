@@ -7,7 +7,7 @@ This directory deploys the same SonicAgent speech service in two places:
 
 The inference code stays in `src/sonicagent_rt`. Nothing in `hf/` is a second speech engine. The image listens on `0.0.0.0:7860`. Local Compose publishes that port on the host as `8000`.
 
-The default model is multilingual Whisper Tiny through `faster-whisper` and CTranslate2, CPU INT8. English-only checkpoints such as `tiny.en` are rejected because Italian is required. Speech synthesis with Piper is optional and is off until voice files are installed and `SONIC_TTS_ENABLED=true`.
+The default model is multilingual Whisper Tiny through `faster-whisper` and CTranslate2, CPU INT8. English-only checkpoints such as `tiny.en` are rejected. Listening covers English, Spanish, French, German, Italian, and Portuguese. Speech synthesis with Piper is optional and is off until voice files are installed and `SONIC_TTS_ENABLED=true`.
 
 Hugging Face is a remote CPU host. It is not on-device inference and it is not an offline Quest mode. A Space can sleep, cold-start, and run out of memory. This repository does not claim the Space is always on.
 
@@ -59,7 +59,7 @@ docker compose -f hf/docker-compose.yml up --build
 
 | Size | Use |
 | --- | --- |
-| `tiny` | Default. Multilingual. Fits a small CPU host. English and Italian. |
+| `tiny` | Default. Multilingual. Fits a small CPU host. English, Spanish, French, German, Italian, and Portuguese. |
 | `base` | Optional larger multilingual checkpoint. Not bundled. Checksum is not pinned yet. |
 | `tiny.en`, `base.en` | Rejected. They cannot transcribe Italian. |
 
@@ -150,26 +150,23 @@ curl -sS -H "Authorization: Bearer YOUR_SERVICE_TOKEN" \
   http://127.0.0.1:8000/v1/audio/capabilities
 ```
 
-`stt.available` means the library and configured model can be used. `stt.ready` means the weights are loaded. `tts.available` stays false until Piper is actually installed. `realtime` stays `not-implemented`.
+`stt.available` means the library and configured model can be used. `stt.ready` means the weights are loaded. `tts.ready` is true when Piper is installed and a voice file is present. `realtime` stays `not-implemented`.
 
 There is no separate local and hosted transcription schema.
 
-## 5. Optional Piper speech synthesis
+## 5. Piper speech synthesis
 
-Piper is not enabled in the default image. The endpoint exists and returns HTTP 503 `voice_unavailable` until all of the following are true:
+The Hugging Face image installs `piper-tts` 1.8.0, downloads the female catalog in `model_registry/voices.json` from `ruslanmv/hp-piper-voices` during the build, and sets `SONIC_TTS_ENABLED=true`. Those voice files are MIT-licensed Piper models. They are not stored in Git. A local Compose override of `SONIC_TTS_ENABLED=false` turns synthesis off even when the files are in the image.
 
-- `piper-tts` is installed in the environment.
-- `SONIC_TTS_ENABLED=true`.
-- The voice ONNX file and its JSON config are in the model cache.
-- The voice id is one of `en_US-lessac-medium` or `it_IT-paola-medium`.
+Each locale has a Companion voice (slower, softer) and a Secretary voice (clearer, slightly faster). English US uses Kristin and Lessac. English UK uses Cori and Alba. Spanish (Spain) uses the female speaker of Sharvard. Spanish (Mexico) uses Ald. French uses Jessica and Siwis. German uses Eva K and Kerstin, which are lighter models. Italian uses Paola for both profiles. Portuguese is not synthesized: the mirror's Portuguese voices are male.
 
-Download the two voices explicitly:
+`POST /v1/audio/speech` returns `audio/wav` for a catalog voice id. It returns HTTP 503 `voice_unavailable` when Piper or the voice file is missing. Text is limited by `SONIC_TTS_MAX_CHARS` (default 2000). This does not replace Piper inside the 3D Avatar Chatbot.
+
+Download the same voices outside Docker with:
 
 ```bash
 python hf/scripts/setup-models.py --model tiny --tts --cache-dir ~/.cache/sonicagent-rt
 ```
-
-Those files come from `rhasspy/piper-voices`. Review their license before redistributing them. This image does not bundle them, because the STT milestone does not depend on TTS and the extra files increase the Space image.
 
 Request:
 
@@ -177,13 +174,11 @@ Request:
 curl -sS -D - -o reply.wav \
   -H "Authorization: Bearer YOUR_SERVICE_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"text":"Hello! Welcome to our virtual world.","voice":"en_US-lessac-medium","language":"en","format":"wav"}' \
+  -d '{"text":"Hello. How can I help you today?","voice":"en_US-lessac-medium","language":"en","format":"wav"}' \
   http://127.0.0.1:8000/v1/audio/speech
 ```
 
-A working response is `audio/wav`. Text is limited by `SONIC_TTS_MAX_CHARS` (default 2000). This does not replace Piper inside the 3D Avatar Chatbot. Remote synthesis is an optional alternative.
-
-Real Piper output was not verified in the implementation environment that produced this package. Treat TTS as unavailable until a WAV from this endpoint plays.
+A working response is `audio/wav`. Play `reply.wav` to confirm the voice. Empty or oversized text returns an error instead of a silent file.
 
 ## 6. Authentication
 
@@ -407,7 +402,7 @@ sharing their private API token. In Space Settings → Variables, set:
 
 ```env
 SONIC_PUBLIC_DEMO_ENABLED=true
-SONIC_PUBLIC_DEMO_TTS_ENABLED=false
+SONIC_PUBLIC_DEMO_TTS_ENABLED=true
 ```
 
 **Public inference is off by default.** Anonymous STT has strict limits:
@@ -420,10 +415,7 @@ demo endpoints. Disable the public demo if compute resources are abused.
 For a widely promoted service, add user authentication, provider quotas,
 and a shared rate limiter before opening it publicly.
 
-Anonymous TTS is independently disabled until you set
-`SONIC_PUBLIC_DEMO_TTS_ENABLED=true` **and** deploy functioning Piper voice
-models. It will otherwise show disabled, rather than fake a voice sample.
-Avoid activating demo TTS unless its resource usage is acceptable.
+The published Space sets `SONIC_PUBLIC_DEMO_TTS_ENABLED=true` so the Voice Studio Speak panel can generate a short WAV. Public synthesis is still capped at 180 characters and shares the demo rate limit. Set the variable to `false` to hide that button from anonymous visitors. The private `/v1/audio/speech` route continues to require the bearer token.
 
 UI routes:
 

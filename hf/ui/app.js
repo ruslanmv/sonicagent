@@ -44,7 +44,7 @@
     E.recordBtn.disabled = S.busy && !S.recording;
     if (!S.ttsReady) E.ttsNotice.textContent = "Piper is not available on this server. Install and enable a voice model to use TTS.";
     else if (S.mode === "demo" && !S.demoTts) E.ttsNotice.textContent = "The Space owner has disabled public voice synthesis; owner testing remains available.";
-    else E.ttsNotice.textContent = "Piper voice synthesis is ready. Generated WAV audio remains in this browser tab.";
+    else E.ttsNotice.textContent = voiceNotice();
   }
   function request(path,opts,ms) {
     var controller = new AbortController();
@@ -308,14 +308,33 @@
   });
 
   var voices={
-    en:[["en_US-lessac-medium","Lessac · English"]],
-    it:[["it_IT-paola-medium","Paola · Italiano"]]
+    "en-US":[["en_US-kristin-medium","Kristin · Companion","companion"],["en_US-lessac-medium","Lessac · Secretary","secretary"]],
+    "en-GB":[["en_GB-cori-medium","Cori · Companion","companion"],["en_GB-alba-medium","Alba · Secretary","secretary"]],
+    "es-ES":[["es_ES-sharvard-companion","Sharvard · Companion","companion"],["es_ES-sharvard-secretary","Sharvard · Secretary","secretary"]],
+    "es-MX":[["es_MX-ald-companion","Ald · Companion","companion"],["es_MX-ald-medium","Ald · Secretary","secretary"]],
+    "fr-FR":[["fr_FR-upmc-medium","Jessica · Companion","companion"],["fr_FR-siwis-medium","Siwis · Secretary","secretary"]],
+    "de-DE":[["de_DE-eva_k-x_low","Eva K · Companion","companion"],["de_DE-kerstin-low","Kerstin · Secretary","secretary"]],
+    "it-IT":[["it_IT-paola-companion","Paola · Companion","companion"],["it_IT-paola-medium","Paola · Secretary","secretary"]]
   };
+  function selectedVoice() {
+    var list=voices[E.ttsLanguage.value] || voices["en-US"];
+    for (var i=0;i<list.length;i++) if (list[i][0]===E.ttsVoice.value) return list[i];
+    return list[0];
+  }
+  function voiceNotice() {
+    var item=selectedVoice();
+    if (item[2]==="companion") return "Companion voice: warmer, slower, and softer. The WAV stays in this browser tab.";
+    return "Secretary voice: clearer and a little faster, for work. The WAV stays in this browser tab.";
+  }
   function renderVoices() {
+    var previous=E.ttsVoice.value;
     E.ttsVoice.replaceChildren();
-    (voices[E.ttsLanguage.value] || voices.en).forEach(function(item){
+    (voices[E.ttsLanguage.value] || voices["en-US"]).forEach(function(item){
       var option=document.createElement("option");option.value=item[0];option.textContent=item[1];E.ttsVoice.append(option);
     });
+    if (previous) E.ttsVoice.value=previous;
+    if (!E.ttsVoice.value) E.ttsVoice.selectedIndex=0;
+    updateButtons();
   }
   renderVoices();
   E.ttsLanguage.addEventListener("change",renderVoices);

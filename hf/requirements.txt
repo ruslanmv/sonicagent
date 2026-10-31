@@ -5,4 +5,5 @@ ctranslate2>=4.5,<5
 numpy>=1.26,<3
 av>=13,<20
 onnxruntime>=1.18,<2
+piper-tts==1.8.0
 python-multipart>=0.0.9,<1

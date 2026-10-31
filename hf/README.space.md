@@ -11,7 +11,7 @@ license: gpl-3.0
 
 # SonicAgent
 
-SonicAgent is a self-hosted speech service for English and Italian. This Space runs the same FastAPI application used on a local PC. It transcribes microphone audio with multilingual Whisper (`faster-whisper` / CTranslate2, CPU INT8 by default). Optional Piper speech synthesis is off unless voice files and `SONIC_TTS_ENABLED` are configured.
+SonicAgent is a self-hosted speech service. This Space runs the same FastAPI application used on a local PC. It transcribes microphone audio with multilingual Whisper (`faster-whisper` / CTranslate2, CPU INT8) in English, Spanish, French, German, Italian, and Portuguese. It speaks with female Piper voices from `ruslanmv/hp-piper-voices`: a warmer Companion profile and a clearer Secretary profile for English (US and UK), Spanish (Spain and Mexico), French, German, and Italian. Portuguese has no female voice in that mirror.
 
 The Space is a remote processor. Audio sent here leaves the headset or browser. It is not on-device and it is not an offline Quest mode.
 
@@ -40,7 +40,7 @@ Authenticated routes:
 
 - `GET /v1/audio/capabilities`
 - `POST /v1/audio/transcriptions`
-- `POST /v1/audio/speech` (only when Piper is actually installed and enabled)
+- `POST /v1/audio/speech` returns a WAV file for Lessac (English) and Paola (Italian)
 
 Public process checks:
 

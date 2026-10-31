@@ -29,7 +29,7 @@ scaffold skips.
 | Runtime dependencies | Not fully installed in restricted environments | The backend cannot start without packages such as `fastapi` and `uvicorn`. |
 | VAD endpointing | Incomplete | The server must reliably detect when a user starts and stops speaking. |
 | STT batch API | Implemented for multilingual Tiny on CPU | Realtime streaming, GPU hosting, and a verified Space deployment are still open. |
-| TTS real models | Incomplete | Real assistant audio needs verified Piper voice files and synthesis workers. |
+| Piper batch WAV | Female Companion and Secretary voices for the Hugging Face mirror languages, when the voice files are installed | Portuguese has no female voice in that mirror. Phrase-pipelined realtime playback is still open. |
 | Barge-in | Incomplete | Users must be able to interrupt assistant speech safely. |
 | Browser demo | Incomplete | The user interface still needs complete microphone, playback, reconnect, and status handling. |
 | Model registry | Incomplete | Model checksums and attribution must be verified before release. |

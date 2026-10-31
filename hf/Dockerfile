@@ -6,6 +6,7 @@
 FROM python:3.11-slim
 
 ARG BUNDLE_STT_MODEL=1
+ARG BUNDLE_TTS_VOICES=1
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ffmpeg \
@@ -27,7 +28,7 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir . \
     && pip install --no-cache-dir -r requirements.txt \
     && mkdir -p /home/user/.cache/sonicagent-rt \
-    && if [ "$BUNDLE_STT_MODEL" = "1" ]; then python setup-models.py --model tiny --cache-dir /home/user/.cache/sonicagent-rt; fi \
+    && if [ "$BUNDLE_STT_MODEL" = "1" ]; then python setup-models.py --model tiny $(if [ "$BUNDLE_TTS_VOICES" = "1" ]; then echo --tts; fi) --cache-dir /home/user/.cache/sonicagent-rt; fi \
     && chown -R user:user /app /home/user
 
 USER user
@@ -41,7 +42,7 @@ ENV HOME=/home/user \
     SONIC_STT_DEVICE=cpu \
     SONIC_STT_COMPUTE_TYPE=int8 \
     SONIC_STT_LANGUAGE=auto \
-    SONIC_STT_LANGUAGES=en,it \
+    SONIC_STT_LANGUAGES=en,es,fr,de,it,pt \
     SONIC_STT_WARMUP=true \
     SONIC_STT_ALLOW_DOWNLOAD=false \
     SONIC_STT_CPU_THREADS=2 \
@@ -51,12 +52,12 @@ ENV HOME=/home/user \
     SONIC_ENVIRONMENT=production \
     SONIC_AUTH_MODE=token \
     SONIC_VOICE_ENABLED=true \
-    SONIC_TTS_ENABLED=false \
+    SONIC_TTS_ENABLED=true \
     SONIC_STORE_AUDIO=false \
     SONIC_STORE_TRANSCRIPTS=false \
     SONIC_LOG_TRANSCRIPT_CONTENT=false \
     SONIC_PUBLIC_DEMO_ENABLED=false \
-    SONIC_PUBLIC_DEMO_TTS_ENABLED=false
+    SONIC_PUBLIC_DEMO_TTS_ENABLED=true
 
 EXPOSE 7860
 

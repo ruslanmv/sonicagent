@@ -17,7 +17,7 @@ from pathlib import Path
 from sonicagent_rt.config import Settings
 from sonicagent_rt.stt.errors import Cancelled, InferenceFailed, InvalidRequest, TextTooLong, VoiceUnavailable
 from sonicagent_rt.tts.base import SynthesizedSpeech, TtsStatus
-from sonicagent_rt.tts.models import registry_voice_ids, resolve_voice_files, validate_voice_id
+from sonicagent_rt.tts.models import VoiceRecord, registry_voices, resolve_voice_files, validate_voice_id, voice_record
 
 logger = logging.getLogger("sonicagent_rt.tts")
 
@@ -35,9 +35,20 @@ class PiperSynthesizer:
         if importlib.util.find_spec("piper") is None:
             return TtsStatus(False, False, (), "not-installed")
         installed = tuple(sorted(self._installed_voice_ids()))
-        ready = bool(self._loaded)
-        reason = None if ready else ("voice-not-loaded" if installed else "voice-missing")
-        return TtsStatus(True, ready, installed, reason)
+        if not installed:
+            return TtsStatus(False, False, (), "voice-missing")
+        return TtsStatus(True, True, installed, None)
+
+    def warmup(self) -> None:
+        """Load the default voice. Other installed voices load on first use."""
+        if not self._settings.tts_enabled:
+            return
+        installed = self._installed_voice_ids()
+        preferred = self._settings.tts_voice
+        if preferred in installed:
+            self._voice(preferred)
+        elif installed:
+            self._voice(sorted(installed)[0])
 
     def synthesize(self, text: str, *, voice: str, language: str | None, cancel: object) -> SynthesizedSpeech:
         del language
@@ -55,10 +66,13 @@ class PiperSynthesizer:
             validate_voice_id(voice_id)
         except Exception as exc:
             raise VoiceUnavailable("voice id is not allowed") from exc
+        record = voice_record(voice_id)
+        if record is None:
+            raise VoiceUnavailable("voice is not in the local voice registry")
         engine = self._voice(voice_id)
         if _cancelled(cancel):
             raise Cancelled("synthesis was cancelled")
-        wav = _synthesize_wav(engine, cleaned)
+        wav = _synthesize_wav(engine, cleaned, record)
         if not wav.startswith(b"RIFF") or b"WAVE" not in wav[:16]:
             raise InferenceFailed("synthesis did not produce WAV audio")
         return SynthesizedSpeech(wav=wav, voice=voice_id, sample_rate=_wav_rate(wav))
@@ -68,12 +82,11 @@ class PiperSynthesizer:
         if not directory.is_dir():
             return set()
         present: set[str] = set()
-        for voice_id in registry_voice_ids():
-            try:
-                resolve_voice_files(directory, voice_id)
-            except VoiceUnavailable:
-                continue
-            present.add(voice_id)
+        for record in registry_voices():
+            model = directory / record.model_filename
+            config = model.with_name(record.config_filename)
+            if model.is_file() and config.is_file():
+                present.add(record.id)
         return present
 
     def _voice(self, voice_id: str) -> object:
@@ -108,18 +121,44 @@ class PiperSynthesizer:
         return Path(self._settings.resolved_model_cache_dir()) / "tts"
 
 
-def _synthesize_wav(voice: object, text: str) -> bytes:
+def _synthesize_wav(voice: object, text: str, record: VoiceRecord) -> bytes:
     method = getattr(voice, "synthesize_wav", None)
     if not callable(method):
         raise VoiceUnavailable("installed Piper package cannot write WAV audio")
     buffer = io.BytesIO()
     try:
-        with wave.open(buffer, "wb") as wav_file:
-            method(text, wav_file)
+        _write_wav(method, buffer, text, _synthesis_config(record))
+    except TypeError:
+        buffer.seek(0)
+        buffer.truncate(0)
+        try:
+            _write_wav(method, buffer, text, None)
+        except Exception as exc:
+            logger.exception("piper synthesis failed")
+            raise InferenceFailed("speech synthesis failed") from exc
     except Exception as exc:
         logger.exception("piper synthesis failed")
         raise InferenceFailed("speech synthesis failed") from exc
     return buffer.getvalue()
+
+
+def _write_wav(method: object, buffer: io.BytesIO, text: str, syn_config: object | None) -> None:
+    with wave.open(buffer, "wb") as wav_file:
+        if syn_config is None:
+            method(text, wav_file)
+        else:
+            method(text, wav_file, syn_config=syn_config)
+
+
+def _synthesis_config(record: VoiceRecord) -> object:
+    piper_config = importlib.import_module("piper.config")
+    config_type = getattr(piper_config, "SynthesisConfig")
+    return config_type(
+        speaker_id=record.speaker_id,
+        length_scale=record.length_scale,
+        noise_scale=record.noise_scale,
+        noise_w_scale=record.noise_w_scale,
+    )
 
 
 def _wav_rate(payload: bytes) -> int:

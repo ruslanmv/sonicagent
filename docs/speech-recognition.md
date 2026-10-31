@@ -7,7 +7,7 @@ Batch speech-to-text is implemented with `faster-whisper` and CTranslate2. Realt
 - Provider: `SONIC_STT_PROVIDER=faster-whisper`.
 - Default model: multilingual `tiny`, public id `whisper-tiny`.
 - Device: CPU INT8 unless CUDA is actually present and requested.
-- Languages: English and Italian. `auto` leaves detection to Whisper. `tiny.en` and any other `*.en` id are rejected.
+- Languages: English, Spanish, French, German, Italian, and Portuguese. `auto` leaves detection to Whisper. `tiny.en` and any other `*.en` id are rejected.
 - Input: WAV through the standard library, and WebM, Opus, Ogg, MP3, or MP4 through PyAV when `av` is installed. Audio is converted to mono float32 at 16 kHz.
 - One loaded `WhisperModel` is reused. Requests do not download weights.
 
