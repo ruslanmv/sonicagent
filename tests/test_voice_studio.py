@@ -7,6 +7,38 @@ ROOT = Path(__file__).resolve().parents[1]
 UI = ROOT / "hf" / "ui"
 
 
+def test_speak_panel_has_ready_examples_and_autoplay():
+    html = (UI / "index.html").read_text(encoding="utf-8")
+    script = (UI / "app.js").read_text(encoding="utf-8")
+    catalog = (UI / "catalog.json").read_text(encoding="utf-8")
+    assert 'id="exampleList"' in html
+    assert "audioPlayer.play" in script
+    assert "Playing now. Replay on the player is optional." in script
+    assert "/ui-assets/examples/" in script
+    assert "Lessac · English" not in html + script
+    examples = UI / "examples"
+    for voice in (
+        "en_US-kristin-medium",
+        "en_US-lessac-medium",
+        "en_GB-cori-medium",
+        "en_GB-alba-medium",
+        "es_ES-sharvard-companion",
+        "es_ES-sharvard-secretary",
+        "es_MX-ald-companion",
+        "es_MX-ald-medium",
+        "fr_FR-upmc-medium",
+        "fr_FR-siwis-medium",
+        "de_DE-eva_k-x_low",
+        "de_DE-kerstin-low",
+        "it_IT-paola-companion",
+        "it_IT-paola-medium",
+    ):
+        sample = examples / f"{voice}.wav"
+        assert sample.is_file(), voice
+        assert sample.read_bytes()[:4] == b"RIFF"
+        assert voice in catalog
+
+
 def test_static_frontend_complete():
     html = (UI / "index.html").read_text(encoding="utf-8")
     css = (UI / "style.css").read_text(encoding="utf-8")

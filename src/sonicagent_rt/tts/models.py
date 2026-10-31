@@ -13,6 +13,7 @@ _VOICE_ID = re.compile(r"^[a-z]{2}_[A-Z]{2}-[A-Za-z0-9_-]+$")
 _DEFAULT_STYLES = {
     "companion": {"length_scale": 1.16, "noise_scale": 0.8, "noise_w_scale": 0.92},
     "secretary": {"length_scale": 0.94, "noise_scale": 0.48, "noise_w_scale": 0.6},
+    "catalog": {"length_scale": 1.0, "noise_scale": 0.667, "noise_w_scale": 0.8},
 }
 
 

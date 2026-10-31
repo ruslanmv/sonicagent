@@ -55,10 +55,12 @@
     </article>
     <article class="tool-card" aria-labelledby="ttsHeading">
       <header class="card-head"><span class="card-icon mint">♫</span><div><p class="overline">02 / SPEAK</p><h2 id="ttsHeading">Text to speech</h2></div><span class="pill green">PIPER</span></header>
-      <p class="description">Give your words a voice. Companion is warmer and slower. Secretary is clearer and a little faster. Both are female Piper voices.</p>
+      <p class="description">Give your words a voice. Companion is warmer and slower. Secretary is clearer and a little faster. The voice list follows the language you select.</p>
       <label class="input-head" for="ttsInput">YOUR MESSAGE <span id="charCounter">0 / 500</span></label>
       <textarea id="ttsInput" rows="7" maxlength="500" placeholder="Hello there! Welcome to SonicAgent. Let's create something amazing together."></textarea>
-      <div class="tts-settings"><div><label class="field-label" for="ttsLanguage">LANGUAGE</label><select id="ttsLanguage"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="es-ES">Español (España)</option><option value="es-MX">Español (México)</option><option value="fr-FR">Français</option><option value="de-DE">Deutsch</option><option value="it-IT">Italiano</option></select></div><div><label class="field-label" for="ttsVoice">VOICE</label><select id="ttsVoice"><option value="en_US-kristin-medium">Kristin · Companion</option></select></div></div>
+      <div class="tts-settings"><div><label class="field-label" for="ttsLanguage">LANGUAGE</label><select id="ttsLanguage"><option value="">Loading…</option></select></div><div><label class="field-label" for="ttsVoice">VOICE</label><select id="ttsVoice"><option value="">Loading…</option></select></div></div>
+      <p class="field-label" id="exampleLabel">READY TO PLAY</p>
+      <div id="exampleList" class="examples" aria-labelledby="exampleLabel"></div>
       <button class="action-btn mint-action" id="synthesizeBtn" disabled type="button">✦ &nbsp; <span>Generate voice</span><span class="arrow">→</span></button>
       <div class="audio-result"><div class="audio-symbol">≋</div><div><strong id="audioResultTitle">Your audio will appear here</strong><span id="audioResultSubtitle">WAV output · powered by Piper</span></div></div>
       <audio id="audioPlayer" hidden controls preload="none" aria-label="Generated speech"></audio>

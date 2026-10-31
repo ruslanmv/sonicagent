@@ -11,7 +11,7 @@
     "audioInput","dropZone","uploadTitle","uploadSubtitle","audioPreview",
     "audioFileName","audioFileSize","removeAudioBtn","languageSelect","transcribeBtn",
     "transcriptText","resultMeta","copyBtn","ttsInput","charCounter",
-    "ttsLanguage","ttsVoice","synthesizeBtn","audioResultTitle",
+    "ttsLanguage","ttsVoice","exampleList","synthesizeBtn","audioResultTitle",
     "audioResultSubtitle","audioPlayer","ttsNotice","toast"
   ].forEach(function (id) { E[id] = $(id); });
   var S = {
@@ -20,7 +20,7 @@
     recording:false, busy:false, recorder:null, stream:null, chunks:[],
     file:null, transcript:"", audioUrl:null, start:0, timer:null, toastTimer:null,
     audioCtx:null, analyser:null, microphoneNode:null, ready:false,
-    ttsReady:false, ttsKnown:false, raf:null
+    ttsReady:false, ttsKnown:false, raf:null, primed:false
   };
   function notify(text,isError) {
     E.toast.textContent = String(text);
@@ -307,42 +307,124 @@
     catch(_){notify("Clipboard access unavailable",true);}
   });
 
-  var voices={
-    "en-US":[["en_US-kristin-medium","Kristin · Companion","companion"],["en_US-lessac-medium","Lessac · Secretary","secretary"]],
-    "en-GB":[["en_GB-cori-medium","Cori · Companion","companion"],["en_GB-alba-medium","Alba · Secretary","secretary"]],
-    "es-ES":[["es_ES-sharvard-companion","Sharvard · Companion","companion"],["es_ES-sharvard-secretary","Sharvard · Secretary","secretary"]],
-    "es-MX":[["es_MX-ald-companion","Ald · Companion","companion"],["es_MX-ald-medium","Ald · Secretary","secretary"]],
-    "fr-FR":[["fr_FR-upmc-medium","Jessica · Companion","companion"],["fr_FR-siwis-medium","Siwis · Secretary","secretary"]],
-    "de-DE":[["de_DE-eva_k-x_low","Eva K · Companion","companion"],["de_DE-kerstin-low","Kerstin · Secretary","secretary"]],
-    "it-IT":[["it_IT-paola-companion","Paola · Companion","companion"],["it_IT-paola-medium","Paola · Secretary","secretary"]]
-  };
+  var voices={};
+  function currentList() {
+    return voices[E.ttsLanguage.value] || [];
+  }
+  function primePlayback() {
+    if (S.primed) return;
+    S.primed = true;
+    try {
+      E.audioPlayer.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+      var pending = E.audioPlayer.play();
+      if (pending && pending.catch) pending.catch(function(){});
+    } catch (_) {}
+  }
+  function playUrl(url, title, owned) {
+    if (S.audioUrl && S.audioUrl !== url) URL.revokeObjectURL(S.audioUrl);
+    S.audioUrl = owned ? url : null;
+    E.audioPlayer.hidden = false;
+    E.audioPlayer.src = url;
+    E.audioResultTitle.textContent = title;
+    E.audioResultSubtitle.textContent = "Starting playback…";
+    var pending = E.audioPlayer.play();
+    if (pending && pending.then) {
+      pending.then(function(){
+        E.audioResultSubtitle.textContent = "Playing now. Replay on the player is optional.";
+      }).catch(function(){
+        E.audioResultSubtitle.textContent = "Ready. Press play if the browser blocked automatic playback.";
+      });
+    }
+  }
+  function renderExamples() {
+    E.exampleList.replaceChildren();
+    currentList().forEach(function(item){
+      var button=document.createElement("button");
+      button.type="button";
+      button.className="example";
+      button.innerHTML="<span><b></b><span></span></span><span class='play-mark' aria-hidden='true'>▶</span>";
+      button.querySelector("b").textContent=item[1];
+      button.querySelector("span span").textContent=item[3];
+      button.addEventListener("click", function(){
+        primePlayback();
+        var url="/ui-assets/examples/"+item[0]+".wav";
+        fetch(url,{cache:"force-cache"}).then(function(response){
+          if (!response.ok) throw new Error("missing");
+          return response.blob();
+        }).then(function(blob){
+          if (!blob.size) throw new Error("empty");
+          playUrl(URL.createObjectURL(blob), item[1], true);
+        }).catch(function(){
+          if (!item[3]) return;
+          E.ttsInput.value=item[3];
+          E.charCounter.textContent=E.ttsInput.value.length+" / "+E.ttsInput.maxLength;
+          E.ttsVoice.value=item[0];
+          updateButtons();
+          if (!E.synthesizeBtn.disabled) E.synthesizeBtn.click();
+          else notify("Sign in or use the public demo to play this voice.", true);
+        });
+      });
+      E.exampleList.append(button);
+    });
+  }
   function selectedVoice() {
-    var list=voices[E.ttsLanguage.value] || voices["en-US"];
+    var list=currentList();
     for (var i=0;i<list.length;i++) if (list[i][0]===E.ttsVoice.value) return list[i];
-    return list[0];
+    return list[0] || ["","","catalog",""];
   }
   function voiceNotice() {
     var item=selectedVoice();
     if (item[2]==="companion") return "Companion voice: warmer, slower, and softer. The WAV stays in this browser tab.";
-    return "Secretary voice: clearer and a little faster, for work. The WAV stays in this browser tab.";
+    if (item[2]==="secretary") return "Secretary voice: clearer and a little faster, for work. The WAV stays in this browser tab.";
+    return (item[1] || "This voice") + " matches the language you selected. The WAV stays in this browser tab.";
   }
   function renderVoices() {
-    var previous=E.ttsVoice.value;
+    var list=currentList();
+    var keep=E.ttsVoice.value;
+    var match=false;
     E.ttsVoice.replaceChildren();
-    (voices[E.ttsLanguage.value] || voices["en-US"]).forEach(function(item){
-      var option=document.createElement("option");option.value=item[0];option.textContent=item[1];E.ttsVoice.append(option);
+    list.forEach(function(item){
+      var option=document.createElement("option");
+      option.value=item[0];
+      option.textContent=item[1];
+      if (item[0]===keep) match=true;
+      E.ttsVoice.append(option);
     });
-    if (previous) E.ttsVoice.value=previous;
-    if (!E.ttsVoice.value) E.ttsVoice.selectedIndex=0;
+    if (!match) E.ttsVoice.selectedIndex=0;
+    renderExamples();
     updateButtons();
   }
-  renderVoices();
+  function applyCatalog(data) {
+    voices={};
+    var previous=E.ttsLanguage.value;
+    E.ttsLanguage.replaceChildren();
+    (data.locales || []).forEach(function(locale){
+      voices[locale.id]=(locale.voices || []).map(function(voice){
+        return [voice.id, voice.label, voice.role || "catalog", voice.sample || ""];
+      });
+      var option=document.createElement("option");
+      option.value=locale.id;
+      option.textContent=locale.label;
+      E.ttsLanguage.append(option);
+    });
+    if (voices[previous]) E.ttsLanguage.value=previous;
+    else if (voices["en-US"]) E.ttsLanguage.value="en-US";
+    else E.ttsLanguage.selectedIndex=0;
+    renderVoices();
+  }
+  fetch("/ui-assets/catalog.json",{cache:"no-store"}).then(function(response){
+    if (!response.ok) throw new Error("Voice list unavailable");
+    return response.json();
+  }).then(applyCatalog).catch(function(err){
+    E.ttsNotice.textContent="Voice list failed to load. "+err.message;
+  });
   E.ttsLanguage.addEventListener("change",renderVoices);
   E.ttsInput.addEventListener("input",function(){
     E.charCounter.textContent=E.ttsInput.value.length+" / "+E.ttsInput.maxLength;updateButtons();
   });
   E.synthesizeBtn.addEventListener("click",async function(){
     if(S.busy || !authenticated() || !E.ttsInput.value.trim())return;
+    primePlayback();
     S.busy=true;updateButtons();E.synthesizeBtn.querySelector("span").textContent="Synthesizing…";
     E.audioResultTitle.textContent="Generating voice…";
     E.audioResultSubtitle.textContent="Piper synthesis in progress";
@@ -359,12 +441,8 @@
       if(!/audio|octet-stream/i.test(resp.headers.get("content-type") || ""))throw new Error("Expected WAV audio");
       var blob=await resp.blob();
       if(!blob.size)throw new Error("Empty speech response");
-      if(S.audioUrl)URL.revokeObjectURL(S.audioUrl);
-      S.audioUrl=URL.createObjectURL(blob);
-      E.audioPlayer.src=S.audioUrl;E.audioPlayer.hidden=false;
-      E.audioResultTitle.textContent="Voice generated";
-      E.audioResultSubtitle.textContent=fmtBytes(blob.size)+" · WAV · press play below";
-      notify("Piper voice generated");
+      playUrl(URL.createObjectURL(blob), "Voice generated", true);
+      notify("Playing generated voice");
     } catch(err){
       E.audioResultTitle.textContent="Voice unavailable";
       E.audioResultSubtitle.textContent=err.name==="AbortError"?"Request timed out":err.message;

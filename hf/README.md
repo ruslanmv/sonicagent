@@ -156,9 +156,9 @@ There is no separate local and hosted transcription schema.
 
 ## 5. Piper speech synthesis
 
-The Hugging Face image installs `piper-tts` 1.8.0, downloads the female catalog in `model_registry/voices.json` from `ruslanmv/hp-piper-voices` during the build, and sets `SONIC_TTS_ENABLED=true`. Those voice files are MIT-licensed Piper models. They are not stored in Git. A local Compose override of `SONIC_TTS_ENABLED=false` turns synthesis off even when the files are in the image.
+The Hugging Face image installs `piper-tts` 1.8.0, downloads every voice in `model_registry/voices.json` from `ruslanmv/hp-piper-voices` during the build, and sets `SONIC_TTS_ENABLED=true`. Those voice files are MIT-licensed Piper models. They are not stored in Git. A local Compose override of `SONIC_TTS_ENABLED=false` turns synthesis off even when the files are in the image.
 
-Each locale has a Companion voice (slower, softer) and a Secretary voice (clearer, slightly faster). English US uses Kristin and Lessac. English UK uses Cori and Alba. Spanish (Spain) uses the female speaker of Sharvard. Spanish (Mexico) uses Ald. French uses Jessica and Siwis. German uses Eva K and Kerstin, which are lighter models. Italian uses Paola for both profiles. Portuguese is not synthesized: the mirror's Portuguese voices are male.
+Each locale with a female speaker has a Companion voice (slower, softer) and a Secretary voice (clearer, slightly faster). English US uses Kristin and Lessac. English UK uses Cori and Alba. Spanish (Spain) uses the female speaker of Sharvard for those two profiles, and lists the male Sharvard speaker separately. Spanish (Mexico) uses Ald. French uses Jessica and Siwis. German uses Eva K and Kerstin, which are lighter models. Italian uses Paola for both profiles, plus Riccardo, labeled male. The mirror's Portuguese voices, Edresson and Faber, are male and stay labeled male. Voice Studio shows only the voices of the selected language.
 
 `POST /v1/audio/speech` returns `audio/wav` for a catalog voice id. It returns HTTP 503 `voice_unavailable` when Piper or the voice file is missing. Text is limited by `SONIC_TTS_MAX_CHARS` (default 2000). This does not replace Piper inside the 3D Avatar Chatbot.
 

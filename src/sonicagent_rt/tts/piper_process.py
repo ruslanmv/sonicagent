@@ -9,6 +9,7 @@ from __future__ import annotations
 import importlib
 import importlib.util
 import io
+import json
 import logging
 import threading
 import wave
@@ -97,6 +98,7 @@ class PiperSynthesizer:
         if importlib.util.find_spec("piper") is None:
             raise VoiceUnavailable("Piper is not installed")
         model, config = resolve_voice_files(self._model_dir(), voice_id)
+        config = _loadable_config(config)
         piper = importlib.import_module("piper")
         voice_type = getattr(piper, "PiperVoice", None)
         if voice_type is None or not hasattr(voice_type, "load"):
@@ -119,6 +121,24 @@ class PiperSynthesizer:
         if configured:
             return Path(configured).expanduser()
         return Path(self._settings.resolved_model_cache_dir()) / "tts"
+
+
+def _loadable_config(config: Path) -> Path:
+    """Rewrite mirror configs that store ``PhonemeType.ESPEAK`` instead of ``espeak``."""
+    try:
+        payload = json.loads(config.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return config
+    raw = payload.get("phoneme_type")
+    if not isinstance(raw, str) or not raw.startswith("PhonemeType."):
+        return config
+    payload["phoneme_type"] = raw.split(".", 1)[1].lower()
+    destination = config.with_name(config.name + ".sonic.json")
+    try:
+        destination.write_text(json.dumps(payload), encoding="utf-8")
+    except OSError:
+        return config
+    return destination
 
 
 def _synthesize_wav(voice: object, text: str, record: VoiceRecord) -> bytes:

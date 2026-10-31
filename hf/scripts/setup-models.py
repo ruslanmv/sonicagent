@@ -1,7 +1,7 @@
 """Download the pinned multilingual Whisper checkpoint into the model cache.
 
-Optional Piper voices are downloaded only with ``--tts``. The file list is the
-female catalog in ``model_registry/voices.json``, hosted on
+Optional Piper voices are downloaded only with ``--tts``. The file list is
+every voice in ``model_registry/voices.json``, hosted on
 ``ruslanmv/hp-piper-voices``. Files are not loaded unless ``SONIC_TTS_ENABLED``
 is true and both the ONNX file and its JSON config are present.
 """
@@ -60,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model", default="tiny", help="Multilingual Whisper size. tiny.en is rejected.")
     parser.add_argument("--cache-dir", default="~/.cache/sonicagent-rt")
     parser.add_argument("--revision", default=None)
-    parser.add_argument("--tts", action="store_true", help="Also download the female Piper voice catalog")
+    parser.add_argument("--tts", action="store_true", help="Also download every Piper voice in the registry")
     args = parser.parse_args(argv)
     cache = Path(args.cache_dir).expanduser()
     from sonicagent_rt.stt.model_store import install_whisper_model

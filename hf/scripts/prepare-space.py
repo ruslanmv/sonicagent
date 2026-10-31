@@ -41,8 +41,12 @@ def _copy_tree(source: Path, destination: Path) -> None:
 
     def ignored(directory: str, names: list[str]) -> set[str]:
         blocked = set()
+        allow_example_wav = Path(directory).name == "examples"
         for name in names:
-            if name in EXCLUDED_PARTS or name.endswith(".egg-info") or Path(name).suffix in SKIP_SUFFIXES:
+            suffix = Path(name).suffix
+            if allow_example_wav and suffix == ".wav":
+                continue
+            if name in EXCLUDED_PARTS or name.endswith(".egg-info") or suffix in SKIP_SUFFIXES:
                 blocked.add(name)
         return blocked
 

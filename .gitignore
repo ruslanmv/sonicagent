@@ -26,6 +26,7 @@ benchmarks/results/*
 !benchmarks/results/.gitkeep
 *.wav
 !tests/fixtures/audio/*.wav
+!hf/ui/examples/*.wav
 *.pcm
 *.raw
 *.opus
