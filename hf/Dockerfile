@@ -21,6 +21,7 @@ COPY deploy/docker/healthcheck.py ./deploy/docker/healthcheck.py
 COPY hf/app.py ./app.py
 COPY hf/requirements.txt ./requirements.txt
 COPY hf/scripts/setup-models.py ./setup-models.py
+COPY hf/ui ./ui
 
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir . \
@@ -53,7 +54,9 @@ ENV HOME=/home/user \
     SONIC_TTS_ENABLED=false \
     SONIC_STORE_AUDIO=false \
     SONIC_STORE_TRANSCRIPTS=false \
-    SONIC_LOG_TRANSCRIPT_CONTENT=false
+    SONIC_LOG_TRANSCRIPT_CONTENT=false \
+    SONIC_PUBLIC_DEMO_ENABLED=false \
+    SONIC_PUBLIC_DEMO_TTS_ENABLED=false
 
 EXPOSE 7860
 
