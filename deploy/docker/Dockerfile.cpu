@@ -3,6 +3,7 @@ RUN useradd --create-home --uid 10001 sonic
 WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY src ./src
+COPY deploy/docker/healthcheck.py ./deploy/docker/healthcheck.py
 RUN pip install --no-cache-dir .
 USER sonic
 EXPOSE 8000

@@ -82,11 +82,22 @@ class Settings(BaseSettings if SettingsConfigDict is not None else _FallbackSett
     vad_pre_roll_ms: int = 200
     vad_max_utterance_sec: int = 30
     stt_provider: str = "faster-whisper"
-    stt_model: str = "small"
+    stt_model: str = "tiny"
     stt_device: str = "cpu"
     stt_compute_type: str = "int8"
     stt_language: str = "auto"
     stt_partials_enabled: bool = False
+    stt_model_path: str = ""
+    stt_allow_download: bool = False
+    stt_warmup: bool = False
+    stt_languages: str = "en,it"
+    stt_vad_filter: bool = False
+    stt_beam_size: int = 5
+    stt_cpu_threads: int = 4
+    stt_silence_rms: float = 0.005
+    stt_timeout_sec: float = 30.0
+    stt_max_concurrency: int = 2
+    stt_rate_limit_per_minute: int = 60
     llm_provider: str = "mock"
     llm_base_url: str = "http://localhost:11434/v1"
     llm_api_key: str = ""
@@ -109,6 +120,34 @@ class Settings(BaseSettings if SettingsConfigDict is not None else _FallbackSett
     store_transcripts: bool = False
     store_audio: bool = False
     log_transcript_content: bool = False
+    voice_enabled: bool = True
+    api_key: str = ""
+    max_audio_seconds: float = 15.0
+    max_upload_bytes: int = 2_097_152
+    tts_enabled: bool = False
+    tts_model_dir: str = ""
+    tts_max_chars: int = 2000
+    tts_timeout_sec: float = 30.0
+
+    def parsed_allowed_origins(self) -> list[str]:
+        """Browser origins allowed to call the voice API. Wildcard is never accepted."""
+        origins: list[str] = []
+        for item in self.allowed_origins.split(","):
+            origin = item.strip()
+            if origin and origin != "*":
+                origins.append(origin)
+        return origins
+
+    def parsed_stt_languages(self) -> list[str]:
+        return [item.strip().lower() for item in self.stt_languages.split(",") if item.strip()]
+
+    def resolved_model_cache_dir(self) -> str:
+        return os.path.expanduser(self.model_cache_dir)
+
+    def requires_strong_api_key(self) -> bool:
+        environment = self.environment.strip().lower()
+        mode = self.auth_mode.strip().lower()
+        return environment == "production" or mode == "token"
 
 
 @lru_cache

@@ -28,7 +28,7 @@ scaffold skips.
 | --- | --- | --- |
 | Runtime dependencies | Not fully installed in restricted environments | The backend cannot start without packages such as `fastapi` and `uvicorn`. |
 | VAD endpointing | Incomplete | The server must reliably detect when a user starts and stops speaking. |
-| STT real models | Incomplete | Real speech-to-text needs model downloads, worker isolation, and tests. |
+| STT batch API | Implemented for multilingual Tiny on CPU | Realtime streaming, GPU hosting, and a verified Space deployment are still open. |
 | TTS real models | Incomplete | Real assistant audio needs verified Piper voice files and synthesis workers. |
 | Barge-in | Incomplete | Users must be able to interrupt assistant speech safely. |
 | Browser demo | Incomplete | The user interface still needs complete microphone, playback, reconnect, and status handling. |

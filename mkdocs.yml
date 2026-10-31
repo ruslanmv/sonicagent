@@ -35,12 +35,15 @@ nav:
       - Security and privacy: security.md
       - Production status: production-status.md
       - Deployment: deployment.md
+      - Speech recognition: speech-recognition.md
+      - OllaBridge voice: integrations/ollabridge-huggingface-voice.md
       - Observability: observability.md
   - Developers:
       - Architecture: architecture.md
       - Protocol overview: protocol.md
       - Binary audio frame: api/binary-frame.md
       - REST API: api/rest-api.md
+      - Errors: api/errors.md
       - WebSocket events: api/websocket-events.md
       - Model registry: model-registry.md
       - Roadmap: roadmap.md

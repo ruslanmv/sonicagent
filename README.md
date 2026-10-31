@@ -17,12 +17,12 @@ SonicAgent is an open-source, server-side real-time voice-agent gateway designed
 | FastAPI application | ✅ | Minimal | No |
 | Browser client | ✅ | Minimal | No |
 | Silero VAD | ✅ | Placeholder | No |
-| faster-whisper STT | ✅ | Placeholder | No |
+| faster-whisper STT | ✅ | Batch CPU Tiny, English and Italian | No |
 | LLM providers | ✅ | Mock included | No |
 | Piper TTS | ✅ | Placeholder | No |
 | Barge-in | ✅ | Interfaces only | No |
 | Benchmarks and telemetry | ✅ | Synthetic skeleton | No |
-| Containers and deployment | ✅ | Development baseline | No |
+| Containers and deployment | ✅ | `hf/` local and Space image | No |
 
 The repository is deliberately honest about its maturity. Do not publish latency claims from this scaffold. Replace placeholders, run the real-model benchmark suite, document hardware, and complete the security checklist before production use.
 
@@ -87,6 +87,7 @@ model_registry/         Voice/STT manifests, schemas, and checksums
 benchmarks/             Stage, end-to-end, and concurrency benchmarks
 configs/                Layered application profiles
 deploy/                 Docker, proxy, and observability templates
+hf/                     Local and Hugging Face voice image, scripts, and tests
 docs/                   Architecture, protocol, ADRs, runbooks, security
 examples/               Minimal browser and Python examples
 tests/                  Unit, contract, integration, E2E, performance tests
@@ -130,7 +131,13 @@ The default provider profile uses a deterministic mock LLM and does not download
 docker compose up --build
 ```
 
-The root Compose file starts the API and web scaffold. Real model volumes, GPU access, Redis, Prometheus, Grafana, and OpenTelemetry are provided as deployment templates under `deploy/`.
+The root Compose file starts the API and web scaffold. The voice image, which runs real Whisper Tiny transcription on CPU, is separate:
+
+```bash
+docker compose -f hf/docker-compose.yml up --build
+```
+
+That serves `http://127.0.0.1:8000` and is documented in [`hf/README.md`](hf/README.md). Realtime WebSocket audio, Silero VAD, and Piper playback are still not the default path. GPU access, Redis, Prometheus, Grafana, and OpenTelemetry remain templates under `deploy/`.
 
 ## Production implementation sequence
 
