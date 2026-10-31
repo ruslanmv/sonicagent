@@ -371,3 +371,90 @@ Use the Space when the headset should work with the PC switched off. That still 
 - and the OllaBridge voice route from the contract doc, which is not in this repository yet.
 
 GPU acceleration, WebSocket audio, and verified Piper output are later work. They are not implied by a successful Tiny transcription.
+
+## 11. Voice Studio web interface
+
+This image now serves a responsive web UI at `/` for **both** Docker Desktop
+(`http://localhost:8000/`) and the existing Hugging Face Space
+(`https://huggingface.co/spaces/ruslanmv/SonicAgent`).
+
+The original root JSON discovery response is preserved at `/api-info`.
+Existing `/docs`, `/health/*`, and `/v1/audio/*` endpoints keep their original
+contracts.
+
+Features: server/Whisper/Piper readiness, Quest/desktop microphone recording,
+WebM/Opus or OGG/Opus uploads, WAV/audio uploads, English/Italian/auto STT,
+copyable transcript, and Piper WAV synthesis/playback when available.
+
+### Owner / service-token testing
+
+By default transcription and TTS remain protected by `SONIC_API_KEY`.
+The interface provides an **API token** panel for private testing only. The
+token remains in browser tab memory; it is never embedded in source or saved
+to localStorage. Use private trusted browsers and avoid pasting production
+service credentials on shared machines. The browser still sends that token
+in the Authorization header to your Space.
+
+For browser token mode configure `SONIC_ALLOWED_ORIGINS` with the **exact**
+origin of your Space app, normally
+`https://ruslanmv-sonicagent.hf.space`, and any explicitly trusted local
+origins. The backend rejects unlisted Origin values.
+
+### Optional anonymous public demo
+
+Owners can let Hugging Face visitors try short speech samples without
+sharing their private API token. In Space Settings → Variables, set:
+
+```env
+SONIC_PUBLIC_DEMO_ENABLED=true
+SONIC_PUBLIC_DEMO_TTS_ENABLED=false
+```
+
+**Public inference is off by default.** Anonymous STT has strict limits:
+8 seconds, 1.2 MiB, one in-flight demo, 8 requests/minute globally and
+3 requests/minute per observed client. These are single-process best-effort
+limits, not a distributed security control; clients behind the Space proxy
+may share one apparent IP. Browser-origin checks and custom demo headers
+are not authentication, and non-browser clients may still request the
+demo endpoints. Disable the public demo if compute resources are abused.
+For a widely promoted service, add user authentication, provider quotas,
+and a shared rate limiter before opening it publicly.
+
+Anonymous TTS is independently disabled until you set
+`SONIC_PUBLIC_DEMO_TTS_ENABLED=true` **and** deploy functioning Piper voice
+models. It will otherwise show disabled, rather than fake a voice sample.
+Avoid activating demo TTS unless its resource usage is acceptable.
+
+UI routes:
+
+```text
+GET  /                        Voice Studio
+GET  /ui-assets/style.css     Styles
+GET  /ui-assets/app.js        Browser app
+GET  /api-info                Original JSON root metadata
+GET  /demo/status             Anonymous demo availability
+POST /demo/transcriptions     Limited demo STT (optional)
+POST /demo/speech             Limited demo TTS (optional)
+```
+
+Recordings are submitted **only after** clicking *Transcribe audio*. A Hugging
+Face Space processes audio remotely. This is not on-device STT. Microphone
+access requires HTTPS (or localhost) and browser permission, including on
+Meta Quest.
+
+### Deploy the new UI
+
+The existing `hf/scripts/prepare-space.py` staging script includes
+`hf/ui/` and the Dockerfile copies it to `/app/ui`. This avoids a mismatch
+between the local Docker image and the hosted Space.
+
+```powershell
+# Dry-run first.
+python hf/scripts/prepare-space.py --dest ./hf-space-stage
+# Then, when your authenticated HF CLI and Space secrets are configured:
+hf auth login
+.\hf\scripts\deploy-space.ps1 -Push
+```
+
+Do not put a production service token into source control or into the Space
+README. Test readiness and a **real** audio transcription after deployment.

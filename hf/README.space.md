@@ -15,6 +15,25 @@ SonicAgent is a self-hosted speech service for English and Italian. This Space r
 
 The Space is a remote processor. Audio sent here leaves the headset or browser. It is not on-device and it is not an offline Quest mode.
 
+## Voice Studio
+
+Open the **App** tab to use the responsive SonicAgent Voice Studio at `/`.
+Record your microphone or upload audio, transcribe with Whisper, and try
+Piper TTS when a voice is installed. The UI also displays live model
+readiness. The previous JSON root response is at `/api-info`; the full
+OpenAPI documentation remains at `/docs`.
+
+**Private by default:** The production API uses a bearer service token.
+The browser interface keeps a manually entered token in tab memory only,
+but owners should not enter a shared production secret on public machines.
+
+**Optional public visitors:** Set `SONIC_PUBLIC_DEMO_ENABLED=true` in the
+Space Variables to enable a bounded anonymous speech-to-text demo.
+`SONIC_PUBLIC_DEMO_TTS_ENABLED=true` separately enables voice synthesis
+when Piper is ready. Public demo traffic consumes your CPU capacity and
+may incur hosting costs. See `hf/README.md` in the GitHub repository
+for rate limits and security constraints.
+
 ## API
 
 Authenticated routes:
