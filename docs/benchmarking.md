@@ -17,5 +17,12 @@ Run the deterministic scaffold benchmark:
 make benchmark-smoke
 ```
 
-Real-model benchmark commands remain disabled until providers are implemented and model hashes are pinned.
+That scaffold does not call Whisper or Piper. Measure the running HTTP API with:
+
+```bash
+export SONIC_API_KEY=your-service-token
+make benchmark-endpoints
+```
+
+The command writes `benchmarks/results/endpoints.json`. Read [`benchmarks/README.md`](../benchmarks/README.md) before quoting a figure. A headset still waits for the full WAV, because realtime playback is not implemented.
 

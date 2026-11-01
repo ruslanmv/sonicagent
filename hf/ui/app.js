@@ -11,8 +11,8 @@
     "audioInput","dropZone","uploadTitle","uploadSubtitle","audioPreview",
     "audioFileName","audioFileSize","removeAudioBtn","languageSelect","transcribeBtn",
     "transcriptText","resultMeta","copyBtn","ttsInput","charCounter",
-    "ttsLanguage","ttsVoice","synthesizeBtn","audioResultTitle",
-    "audioResultSubtitle","audioPlayer","ttsNotice","toast"
+    "ttsLanguage","ttsVoice","voiceSearch","voiceFilters","voiceGrid","synthesizeBtn",
+    "audioPlayer","ttsNotice","toast"
   ].forEach(function (id) { E[id] = $(id); });
   var S = {
     mode:"token", token:"", demoEnabled:false, demoTts:false, demoSeconds:8,
@@ -20,7 +20,8 @@
     recording:false, busy:false, recorder:null, stream:null, chunks:[],
     file:null, transcript:"", audioUrl:null, start:0, timer:null, toastTimer:null,
     audioCtx:null, analyser:null, microphoneNode:null, ready:false,
-    ttsReady:false, ttsKnown:false, raf:null
+    ttsReady:false, ttsKnown:false, raf:null, primed:false, autoTried:false,
+    voiceFilter:"all", playingId:""
   };
   function notify(text,isError) {
     E.toast.textContent = String(text);
@@ -117,6 +118,7 @@
       : "Owner/testing mode: enter a token. It stays in this tab memory and is never stored.";
     if(mode === "token" && S.token.trim()) capabilities();
     updateButtons();
+    maybeAutoTranscribe();
   }
   E.guestModeBtn.addEventListener("click",function(){setMode("demo");});
   E.tokenModeBtn.addEventListener("click",function(){setMode("token");});
@@ -146,6 +148,8 @@
     if(file.size > limit) return notify("File exceeds "+fmtBytes(limit)+". Choose a shorter recording.",true);
     if(file.size < 64) return notify("Audio file is empty.",true);
     S.file=file;
+    S.autoTried=false;
+    S.transcript="";
     E.audioPreview.hidden=false;
     E.audioFileName.textContent=file.name || "recording.webm";
     E.audioFileSize.textContent=fmtBytes(file.size);
@@ -165,7 +169,7 @@
   E.recordTab.addEventListener("click",function(){tab("record");});
   E.uploadTab.addEventListener("click",function(){tab("upload");});
   E.removeAudioBtn.addEventListener("click",clearFile);
-  E.audioInput.addEventListener("change",function(){setFile(E.audioInput.files && E.audioInput.files[0]);});
+  E.audioInput.addEventListener("change",function(){setFile(E.audioInput.files && E.audioInput.files[0]); maybeAutoTranscribe();});
   E.dropZone.addEventListener("click",function(){E.audioInput.click();});
   E.dropZone.addEventListener("keydown",function(ev){
     if(ev.key === "Enter" || ev.key === " "){ev.preventDefault();E.audioInput.click();}
@@ -176,7 +180,7 @@
   ["dragleave","drop"].forEach(function(evName){
     E.dropZone.addEventListener(evName,function(ev){ev.preventDefault();E.dropZone.classList.remove("over");});
   });
-  E.dropZone.addEventListener("drop",function(ev){setFile(ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0]);});
+  E.dropZone.addEventListener("drop",function(ev){setFile(ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0]); maybeAutoTranscribe();});
   function mimeForRecorder() {
     var types=["audio/webm;codecs=opus","audio/webm","audio/ogg;codecs=opus"];
     return types.find(function(t){return MediaRecorder.isTypeSupported(t);});
@@ -208,15 +212,16 @@
         S.recording=false;S.busy=false;S.recorder=null;
         E.recordPane.classList.remove("recording");
         E.recordBtn.textContent="●  Record again";
-        E.recordHint.textContent=blob.size?"Recording ready to transcribe.":"No sound was captured.";
+        E.recordHint.textContent=blob.size?"Recording captured. Starting transcription.":"No sound was captured.";
         if(blob.size) setFile(new File([blob],"sonicagent-recording."+(type.indexOf("ogg")>=0?"ogg":"webm"),{type:blob.type}));
         updateButtons();
+        maybeAutoTranscribe();
       };
       recorder.start(250);
       S.start=Date.now();S.recording=true;S.busy=false;
       E.recordPane.classList.add("recording");
       E.recordBtn.textContent="■  Stop recording";
-      E.recordHint.textContent="Recording locally. Audio is sent only when you click Transcribe.";
+      E.recordHint.textContent="Recording. Transcription starts when you stop.";
       S.timer=setInterval(function(){
         var sec=Math.floor((Date.now()-S.start)/1000);
         E.recordTime.textContent=String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0");
@@ -270,7 +275,12 @@
   }
   visualize();
 
-  E.transcribeBtn.addEventListener("click",async function(){
+  function maybeAutoTranscribe() {
+    if (S.autoTried || S.busy || S.recording || !S.file || !authenticated()) return;
+    S.autoTried = true;
+    transcribe();
+  }
+  async function transcribe() {
     if(S.busy || !S.file) return;
     if(!authenticated()) return notify("Enable a demo or enter an API token first.",true);
     S.busy=true;updateButtons();E.transcribeBtn.querySelector("span").textContent="Transcribing…";
@@ -298,56 +308,285 @@
       E.transcriptText.classList.remove("has-text");
       notify("Speech recognition unavailable: "+err.message,true);
     } finally {
-      S.busy=false;E.transcribeBtn.querySelector("span").textContent="Transcribe audio";updateButtons();
+      S.busy=false;E.transcribeBtn.querySelector("span").textContent="Transcribe again";updateButtons();
     }
-  });
+  }
+  E.transcribeBtn.addEventListener("click", function(){ S.autoTried = true; transcribe(); });
   E.copyBtn.addEventListener("click",async function(){
     if(!S.transcript)return;
     try{await navigator.clipboard.writeText(S.transcript);notify("Copied transcript");}
     catch(_){notify("Clipboard access unavailable",true);}
   });
 
-  var voices={
-    "en-US":[["en_US-kristin-medium","Kristin · Companion","companion"],["en_US-lessac-medium","Lessac · Secretary","secretary"]],
-    "en-GB":[["en_GB-cori-medium","Cori · Companion","companion"],["en_GB-alba-medium","Alba · Secretary","secretary"]],
-    "es-ES":[["es_ES-sharvard-companion","Sharvard · Companion","companion"],["es_ES-sharvard-secretary","Sharvard · Secretary","secretary"]],
-    "es-MX":[["es_MX-ald-companion","Ald · Companion","companion"],["es_MX-ald-medium","Ald · Secretary","secretary"]],
-    "fr-FR":[["fr_FR-upmc-medium","Jessica · Companion","companion"],["fr_FR-siwis-medium","Siwis · Secretary","secretary"]],
-    "de-DE":[["de_DE-eva_k-x_low","Eva K · Companion","companion"],["de_DE-kerstin-low","Kerstin · Secretary","secretary"]],
-    "it-IT":[["it_IT-paola-companion","Paola · Companion","companion"],["it_IT-paola-medium","Paola · Secretary","secretary"]]
-  };
+  var voices={};
+  function currentList() {
+    return voices[E.ttsLanguage.value] || [];
+  }
+  function primePlayback() {
+    if (S.primed) return;
+    S.primed = true;
+    try {
+      E.audioPlayer.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+      var pending = E.audioPlayer.play();
+      if (pending && pending.catch) pending.catch(function(){});
+    } catch (_) {}
+  }
+  function playUrl(url, owned) {
+    if (S.audioUrl && S.audioUrl !== url) URL.revokeObjectURL(S.audioUrl);
+    S.audioUrl = owned ? url : null;
+    E.audioPlayer.src = url;
+    var pending = E.audioPlayer.play();
+    if (pending && pending.then) pending.then(markCards).catch(function(){ S.playingId=""; markCards(); });
+    else markCards();
+  }
+  var FILTERS=[["all","All"],["companion","Companion"],["secretary","Secretary"],["female","Female"],["male","Male"]];
+  var GROUPS=["Companion","Secretary","More female voices","More male voices","Other speakers"];
+  function accentTerms(localeId) {
+    if (localeId==="en-GB") return "british uk english";
+    if (localeId==="en-US") return "american us english";
+    if (localeId==="es-ES") return "spain spanish español";
+    if (localeId==="es-MX") return "mexico mexican spanish español";
+    if (localeId==="it-IT") return "italian italiano";
+    if (localeId==="fr-FR") return "french français";
+    if (localeId==="de-DE") return "german deutsch";
+    if (localeId==="pt-BR") return "portuguese português brazil";
+    return "";
+  }
+  function describeVoice(voice, locale) {
+    var label=voice.label || voice.id;
+    var role=voice.role || "catalog";
+    var gender="unspecified";
+    if (role==="companion" || role==="secretary" || /female/i.test(label)) gender="female";
+    if (/· male/i.test(label)) gender="male";
+    var group="Other speakers";
+    var note="Published speaker";
+    if (role==="companion") { group="Companion"; note="Warmer and slower"; }
+    else if (role==="secretary") { group="Secretary"; note="Clearer, for work"; }
+    else if (gender==="female") { group="More female voices"; note="Published female speaker"; }
+    else if (gender==="male") { group="More male voices"; note="Published male speaker"; }
+    return {id:voice.id,label:label,name:label.split(" · ")[0],role:role,gender:gender,group:group,note:note,sample:voice.sample || "",locale:locale.id,localeLabel:locale.label,accent:accentTerms(locale.id)};
+  }
+  function voiceHay(voice) {
+    return [voice.name,voice.label,voice.group,voice.gender,voice.note,voice.localeLabel,voice.accent].join(" ").toLowerCase();
+  }
   function selectedVoice() {
-    var list=voices[E.ttsLanguage.value] || voices["en-US"];
-    for (var i=0;i<list.length;i++) if (list[i][0]===E.ttsVoice.value) return list[i];
-    return list[0];
+    var list=currentList();
+    for (var i=0;i<list.length;i++) if (list[i].id===E.ttsVoice.value) return list[i];
+    return list[0] || {id:"",label:"",name:"",role:"catalog",note:"",sample:""};
   }
   function voiceNotice() {
     var item=selectedVoice();
-    if (item[2]==="companion") return "Companion voice: warmer, slower, and softer. The WAV stays in this browser tab.";
-    return "Secretary voice: clearer and a little faster, for work. The WAV stays in this browser tab.";
+    if (item.role==="companion") return "Companion voice: warmer, slower, and softer. The WAV stays in this browser tab.";
+    if (item.role==="secretary") return "Secretary voice: clearer and a little faster, for work. The WAV stays in this browser tab.";
+    return (item.label || "This voice") + " matches the language you selected. The WAV stays in this browser tab.";
   }
-  function renderVoices() {
-    var previous=E.ttsVoice.value;
+  function syncSelect(list) {
+    var keep=E.ttsVoice.value;
+    var match=false;
     E.ttsVoice.replaceChildren();
-    (voices[E.ttsLanguage.value] || voices["en-US"]).forEach(function(item){
-      var option=document.createElement("option");option.value=item[0];option.textContent=item[1];E.ttsVoice.append(option);
+    list.forEach(function(voice){
+      var option=document.createElement("option");
+      option.value=voice.id;
+      option.textContent=voice.label;
+      if (voice.id===keep) match=true;
+      E.ttsVoice.append(option);
     });
-    if (previous) E.ttsVoice.value=previous;
-    if (!E.ttsVoice.value) E.ttsVoice.selectedIndex=0;
+    if (!match && list[0]) E.ttsVoice.value=list[0].id;
+  }
+  function matchesQuery(voice, query) {
+    if (!query) return true;
+    return query.split(/\s+/).every(function(part){
+      if (part==="male" || part==="female") return voice.gender===part;
+      return voiceHay(voice).indexOf(part)>=0;
+    });
+  }
+  function visibleVoices() {
+    var query=(E.voiceSearch.value || "").trim().toLowerCase();
+    var pool=currentList();
+    if (query && !pool.some(function(voice){ return matchesQuery(voice, query); })) {
+      var locales=Object.keys(voices);
+      for (var i=0;i<locales.length;i++) {
+        if (!voices[locales[i]].some(function(voice){ return matchesQuery(voice, query); })) continue;
+        E.ttsLanguage.value=locales[i];
+        syncSelect(voices[locales[i]]);
+        var first=voices[locales[i]].filter(function(voice){ return matchesQuery(voice, query); })[0];
+        if (first) E.ttsVoice.value=first.id;
+        pool=voices[locales[i]];
+        break;
+      }
+    }
+    return pool.filter(function(voice){
+      if (S.voiceFilter==="companion" || S.voiceFilter==="secretary") {
+        if (voice.role!==S.voiceFilter) return false;
+      } else if (S.voiceFilter==="female" || S.voiceFilter==="male") {
+        if (voice.gender!==S.voiceFilter) return false;
+      }
+      return matchesQuery(voice, query);
+    });
+  }
+  function chooseVoice(id) {
+    E.ttsVoice.value=id;
+    markCards();
     updateButtons();
   }
-  renderVoices();
-  E.ttsLanguage.addEventListener("change",renderVoices);
+  function markCards() {
+    var cards=E.voiceGrid.querySelectorAll(".voice-card");
+    cards.forEach(function(card){
+      var id=card.getAttribute("data-voice");
+      var active=id===S.playingId && !E.audioPlayer.paused;
+      card.classList.toggle("is-selected", id===E.ttsVoice.value);
+      card.classList.toggle("is-playing", active);
+      var button=card.querySelector(".voice-play");
+      if (button) {
+        button.textContent=active?"⏸":"▶";
+        button.setAttribute("aria-label", (active?"Pause ":"Play ")+button.getAttribute("data-name"));
+      }
+    });
+  }
+  function playVoice(voice) {
+    if (S.playingId===voice.id && E.audioPlayer.src) {
+      primePlayback();
+      if (E.audioPlayer.paused) {
+        var again=E.audioPlayer.play();
+        if (again && again.catch) again.catch(function(){ S.playingId=""; markCards(); });
+      } else E.audioPlayer.pause();
+      markCards();
+      return;
+    }
+    primePlayback();
+    S.playingId=voice.id;
+    chooseVoice(voice.id);
+    var url="/ui-assets/examples/"+voice.id+".wav";
+    fetch(url,{cache:"force-cache"}).then(function(response){
+      if (!response.ok) throw new Error("missing");
+      return response.blob();
+    }).then(function(blob){
+      if (!blob.size) throw new Error("empty");
+      if (S.playingId!==voice.id) return;
+      playUrl(URL.createObjectURL(blob), true);
+    }).catch(function(){
+      if (!voice.sample) return;
+      E.ttsInput.value=voice.sample;
+      E.charCounter.textContent=E.ttsInput.value.length+" / "+E.ttsInput.maxLength;
+      updateButtons();
+      if (!E.synthesizeBtn.disabled) E.synthesizeBtn.click();
+      else notify("Sign in or use the public demo to play this voice.", true);
+    });
+  }
+  function voiceCard(voice) {
+    var card=document.createElement("article");
+    card.className="voice-card";
+    card.setAttribute("role","listitem");
+    card.setAttribute("data-voice", voice.id);
+    var main=document.createElement("button");
+    main.type="button";
+    main.className="voice-main";
+    var title=document.createElement("b");
+    title.textContent=voice.name;
+    var tags=document.createElement("span");
+    tags.className="voice-tags";
+    [voice.gender, voice.role==="catalog"?"Catalog":voice.role].forEach(function(tag){
+      var pill=document.createElement("span");
+      pill.textContent=tag.charAt(0).toUpperCase()+tag.slice(1);
+      tags.append(pill);
+    });
+    var note=document.createElement("span");
+    note.className="voice-note";
+    note.textContent=voice.note;
+    main.append(title, tags, note);
+    main.addEventListener("click", function(){ chooseVoice(voice.id); });
+    var play=document.createElement("button");
+    play.type="button";
+    play.className="voice-play";
+    play.setAttribute("data-name", voice.name);
+    play.setAttribute("aria-label", "Play "+voice.name);
+    play.textContent="▶";
+    play.addEventListener("click", function(){ playVoice(voice); });
+    card.append(main, play);
+    return card;
+  }
+  function renderFilters() {
+    E.voiceFilters.replaceChildren();
+    FILTERS.forEach(function(item){
+      var button=document.createElement("button");
+      button.type="button";
+      button.textContent=item[1];
+      button.setAttribute("aria-pressed", String(S.voiceFilter===item[0]));
+      if (S.voiceFilter===item[0]) button.className="selected";
+      button.addEventListener("click", function(){
+        S.voiceFilter=item[0];
+        renderFilters();
+        renderBoard();
+      });
+      E.voiceFilters.append(button);
+    });
+  }
+  function renderBoard() {
+    var list=visibleVoices();
+    E.voiceGrid.replaceChildren();
+    if (!list.length) {
+      var empty=document.createElement("p");
+      empty.className="voice-empty";
+      empty.textContent="No voices match this filter.";
+      E.voiceGrid.append(empty);
+      return;
+    }
+    GROUPS.forEach(function(group){
+      var items=list.filter(function(voice){ return voice.group===group; });
+      if (!items.length) return;
+      var heading=document.createElement("h3");
+      heading.className="voice-group";
+      heading.textContent=group.toUpperCase();
+      var grid=document.createElement("div");
+      grid.className="voice-cards";
+      items.forEach(function(voice){ grid.append(voiceCard(voice)); });
+      E.voiceGrid.append(heading, grid);
+    });
+    markCards();
+  }
+  function renderVoices() {
+    syncSelect(currentList());
+    renderBoard();
+    updateButtons();
+  }
+  function applyCatalog(data) {
+    voices={};
+    var previous=E.ttsLanguage.value;
+    E.ttsLanguage.replaceChildren();
+    (data.locales || []).forEach(function(locale){
+      voices[locale.id]=(locale.voices || []).map(function(voice){ return describeVoice(voice, locale); });
+      var option=document.createElement("option");
+      option.value=locale.id;
+      option.textContent=locale.label;
+      E.ttsLanguage.append(option);
+    });
+    if (voices[previous]) E.ttsLanguage.value=previous;
+    else if (voices["en-US"]) E.ttsLanguage.value="en-US";
+    else E.ttsLanguage.selectedIndex=0;
+    renderFilters();
+    renderVoices();
+  }
+  fetch("/ui-assets/catalog.json",{cache:"no-store"}).then(function(response){
+    if (!response.ok) throw new Error("Voice list unavailable");
+    return response.json();
+  }).then(applyCatalog).catch(function(err){
+    E.ttsNotice.textContent="Voice list failed to load. "+err.message;
+  });
+  E.audioPlayer.addEventListener("play", markCards);
+  E.audioPlayer.addEventListener("pause", markCards);
+  E.audioPlayer.addEventListener("ended", function(){ S.playingId=""; markCards(); });
+  E.voiceSearch.addEventListener("input", renderBoard);
+  E.ttsLanguage.addEventListener("change", function(){ E.voiceSearch.value=""; renderVoices(); });
   E.ttsInput.addEventListener("input",function(){
     E.charCounter.textContent=E.ttsInput.value.length+" / "+E.ttsInput.maxLength;updateButtons();
   });
   E.synthesizeBtn.addEventListener("click",async function(){
     if(S.busy || !authenticated() || !E.ttsInput.value.trim())return;
+    var voiceId=selectedVoice().id;
+    primePlayback();
     S.busy=true;updateButtons();E.synthesizeBtn.querySelector("span").textContent="Synthesizing…";
-    E.audioResultTitle.textContent="Generating voice…";
-    E.audioResultSubtitle.textContent="Piper synthesis in progress";
     var body={
-      text:E.ttsInput.value.trim(),voice:E.ttsVoice.value,
+      text:E.ttsInput.value.trim(),voice:voiceId,
       language:E.ttsLanguage.value,format:"wav"
     };
     try {
@@ -359,15 +598,11 @@
       if(!/audio|octet-stream/i.test(resp.headers.get("content-type") || ""))throw new Error("Expected WAV audio");
       var blob=await resp.blob();
       if(!blob.size)throw new Error("Empty speech response");
-      if(S.audioUrl)URL.revokeObjectURL(S.audioUrl);
-      S.audioUrl=URL.createObjectURL(blob);
-      E.audioPlayer.src=S.audioUrl;E.audioPlayer.hidden=false;
-      E.audioResultTitle.textContent="Voice generated";
-      E.audioResultSubtitle.textContent=fmtBytes(blob.size)+" · WAV · press play below";
-      notify("Piper voice generated");
+      S.playingId=voiceId;
+      playUrl(URL.createObjectURL(blob), true);
     } catch(err){
-      E.audioResultTitle.textContent="Voice unavailable";
-      E.audioResultSubtitle.textContent=err.name==="AbortError"?"Request timed out":err.message;
+      S.playingId="";
+      markCards();
       notify("Piper error: "+err.message,true);
     } finally{
       S.busy=false;E.synthesizeBtn.querySelector("span").textContent="Generate voice";updateButtons();

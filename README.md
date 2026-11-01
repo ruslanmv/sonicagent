@@ -32,13 +32,13 @@ Use it for a support desk, a private assistant, a WebXR companion, or an interna
 | Capability | Status |
 | --- | --- |
 | Batch speech to text | Whisper Tiny, CPU INT8. English, Spanish, French, German, Italian, Portuguese. |
-| Batch text to speech | Piper WAV. Female Companion and Secretary profiles for every locale below except Portuguese. |
+| Batch text to speech | Piper WAV. Female Companion and Secretary profiles, plus every other voice in the Hugging Face mirror, under its own language. |
 | Voice Studio | Browser page on the Hugging Face Space and in the voice image. |
 | Access control | Bearer token on `/v1/audio/*`. Optional bounded public demo, off unless you enable it. |
 | Privacy defaults | No stored audio, no stored transcripts, no transcript text in logs. |
 | Realtime calls, VAD, barge-in, streaming LLM | Designed, not implemented. Do not quote latency from this repository. |
 
-Portuguese listening works. Portuguese speech is not in this catalog: the voices published for Portuguese on the Hugging Face mirror are male, and this project does not present them as female.
+Portuguese listening works. The Portuguese voices in the mirror, Edresson and Faber, are male and stay labeled male. Voice Studio shows only the voices of the language you select: Italiano lists Paola and Riccardo, and Español lists Spanish voices.
 
 ## Voices
 
@@ -54,7 +54,7 @@ Source mirror: [`ruslanmv/hp-piper-voices`](https://huggingface.co/ruslanmv/hp-p
 | German | Eva K, lighter model | Kerstin, lighter model |
 | Italian | Paola | Paola |
 
-Spain uses speaker `F` of the two-speaker Sharvard model. The other speaker is male and is not offered. French Companion uses the Jessica speaker of the UPMC model. When a locale has one female voice, Companion and Secretary share that file and differ by pace and noise: Companion is slower and softer; Secretary is a little faster and steadier.
+Spain's Companion and Secretary profiles use speaker `F` of the two-speaker Sharvard model. The other Sharvard speaker is offered separately and labeled male. French Companion uses the Jessica speaker of the UPMC model. Pierre is the other speaker of that file and is labeled male. When a locale has one female voice, Companion and Secretary share that file and differ by pace and noise: Companion is slower and softer; Secretary is a little faster and steadier.
 
 ## Project status
 
@@ -67,7 +67,7 @@ Spain uses speaker `F` of the two-speaker Sharvard model. The other speaker is m
 | Silero VAD | ✅ | Placeholder | No |
 | faster-whisper STT | ✅ | Batch CPU Tiny, six languages | No |
 | LLM providers | ✅ | Mock included | No |
-| Piper TTS | ✅ | Batch WAV, female Companion and Secretary catalog | No |
+| Piper TTS | ✅ | Batch WAV for the full mirror, with female Companion and Secretary presets | No |
 | Barge-in | ✅ | Interfaces only | No |
 | Benchmarks and telemetry | ✅ | Synthetic skeleton | No |
 | Containers and deployment | ✅ | `hf/` local image and Hugging Face Space | No |
@@ -319,7 +319,7 @@ Example model path pattern:
 {lang}/{locale}/{speaker}/{quality}/{voice_id}.onnx.json
 ```
 
-The voice image downloads the female catalog during the build. Install the same files outside Docker with:
+The voice image downloads every voice in the registry during the build. Install the same files outside Docker with:
 
 ```bash
 python hf/scripts/setup-models.py --model tiny --tts --cache-dir ~/.cache/sonicagent-rt
@@ -364,7 +364,7 @@ Run the deterministic scaffold benchmark:
 make benchmark-smoke
 ```
 
-Real-model benchmark commands remain disabled until providers are implemented and model hashes are pinned.
+Measure a running speech API, including the Hugging Face Space, with `make benchmark-endpoints`. The probe records client-observed time for health, preset audio, synthesis, and transcription. See [`benchmarks/README.md`](benchmarks/README.md). Those figures describe the measured host. They are not a VR headset result and not a service level.
 
 ## Testing
 
@@ -451,7 +451,7 @@ Suggested milestones:
 - A real faster-whisper transcript is produced.
 - LLM output is streamed and cancellable.
 - Piper audio begins before the complete text response is generated.
-- English, Spanish, French, German, Italian, and Portuguese listening work from a clean checkout. Companion and Secretary speech work where the female catalog has a voice.
+- English, Spanish, French, German, Italian, and Portuguese listening and speech work from a clean checkout once the voice files are installed. Companion and Secretary stay the female presets. Other speakers keep their published gender.
 - Barge-in cancels LLM/TTS work and clears queued playback.
 - Queues remain bounded under slow clients and provider failures.
 - Benchmark reports include reproducible hardware and configuration metadata.
