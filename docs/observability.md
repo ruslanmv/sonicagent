@@ -5,7 +5,9 @@ content.
 
 ## What to measure
 
-For each voice turn, SonicAgent-RT should measure:
+The batch API is measured from the client by `make benchmark-endpoints`. A published pass is in `benchmarks/reports/`. The timestamps below belong to the realtime design, which is not running.
+
+For each realtime turn, SonicAgent should measure:
 
 - Time until speech starts.
 - Time until speech stops.

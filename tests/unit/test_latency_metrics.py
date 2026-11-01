@@ -1,5 +1,7 @@
-import pytest
+"""Turn metrics omit transcript text."""
 
-@pytest.mark.skip(reason="Production behavior for Test Latency Metrics is not implemented in the scaffold")
-def test_placeholder() -> None:
-    pass
+from tests.unit.test_realtime_session import test_turn_returns_a_transcript_without_logging_the_token
+
+
+def test_metrics_event_has_no_transcript_field() -> None:
+    test_turn_returns_a_transcript_without_logging_the_token()

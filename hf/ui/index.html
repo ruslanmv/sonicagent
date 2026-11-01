@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b17">
+<meta name="description" content="SonicAgent Voice Studio: Whisper transcription and optional Piper text-to-speech.">
+<title>SonicAgent — Voice Studio</title>
+<link rel="stylesheet" href="/ui-assets/style.css">
+<script src="/ui-assets/app.js" defer></script>
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+  <a class="brand" href="/" aria-label="SonicAgent Home"><span class="brand-icon">≋</span><span>sonic<span class="accent">agent</span><small>VOICE STUDIO</small></span></a>
+  <nav><a href="#playground" class="current">Playground</a><a href="/docs" target="_blank" rel="noopener">API docs ↗</a><a href="https://huggingface.co/spaces/ruslanmv/SonicAgent" target="_blank" rel="noopener">Hugging Face ↗</a></nav>
+  <div class="connection" id="connectionChip"><span class="dot" id="connectionDot"></span><span id="connectionText">Connecting…</span></div>
+</header>
+<main id="playground">
+  <section class="hero">
+    <div class="hero-copy"><p class="eyebrow"><span class="tiny-line"></span> OPEN-SOURCE VOICE INTELLIGENCE <span class="dim">/ v1.0</span></p>
+      <h1>Give every voice<br><em>somewhere to go.</em></h1>
+      <p class="lead">Transcribe natural speech. Create expressive audio. Explore SonicAgent's voice API in your browser—powered by Whisper &amp; Piper.</p>
+      <div class="tags"><span>✦ Multilingual</span><span>◉ Whisper STT</span><span>♫ Piper TTS</span><span>◇ CPU friendly</span></div>
+    </div>
+    <div class="hero-art" aria-hidden="true"><div class="orb"><div class="orb2"><div class="orb3">≋</div></div></div><span class="orb-label">AUDIO IN ↗ INTELLIGENCE OUT</span></div>
+  </section>
+  <section class="status-strip" aria-label="Server status">
+    <div class="status-header"><span class="pulse-bar"></span>SYSTEM STATUS</div>
+    <div class="status-items">
+      <div class="status-item"><span class="status-dot" id="liveDot"></span><span>Service</span><strong id="liveStatus">Checking…</strong></div>
+      <div class="status-item"><span class="status-dot" id="readyDot"></span><span>Whisper</span><strong id="readyStatus">Checking…</strong></div>
+      <div class="status-item"><span class="status-dot" id="ttsDot"></span><span>Piper</span><strong id="ttsStatus">Checking…</strong></div>
+    </div>
+    <button class="icon-btn" id="refreshBtn" type="button" aria-label="Refresh service status" title="Refresh">↻</button>
+  </section>
+  <section class="access-panel" aria-labelledby="accessTitle">
+    <div class="access-icon">♢</div><div class="access-description"><strong id="accessTitle">Access mode</strong><span id="accessHint">Choose a demo or enter a service token to try the private API.</span></div>
+    <div class="access-controls">
+      <div class="segmented" role="group" aria-label="API access mode"><button id="guestModeBtn" type="button" disabled>Public demo</button><button id="tokenModeBtn" type="button" class="selected">API token</button></div>
+      <div class="token-input" id="keyField"><input type="password" id="tokenInput" placeholder="Enter service token" autocomplete="off" aria-label="Service API token"><button type="button" id="toggleTokenBtn" aria-label="Show token">Show</button></div>
+    </div>
+  </section>
+  <section class="tools">
+    <article class="tool-card" aria-labelledby="sttHeading">
+      <header class="card-head"><span class="card-icon violet">♩</span><div><p class="overline">01 / LISTEN</p><h2 id="sttHeading">Speech to text</h2></div><span class="pill">WHISPER</span></header>
+      <p class="description">Record or drop audio. Whisper transcribes it as soon as the recording is ready, without a second click.</p>
+      <div class="tabs" role="tablist" aria-label="Speech input"><button id="recordTab" class="active" role="tab" aria-selected="true" aria-controls="recordPane" type="button">◉ &nbsp; Record audio</button><button id="uploadTab" role="tab" aria-selected="false" aria-controls="uploadPane" type="button">↥ &nbsp; Upload file</button></div>
+      <div id="recordPane" role="tabpanel" aria-labelledby="recordTab" class="record-pane"><div class="record-time" id="recordTime">00:00</div><canvas id="waveCanvas" width="600" height="80" aria-label="Audio level visualization"></canvas><p class="record-hint" id="recordHint">Press the microphone. Transcription starts when you stop.</p><button class="record-btn" id="recordBtn" type="button">● &nbsp; Start recording</button></div>
+      <div id="uploadPane" role="tabpanel" aria-labelledby="uploadTab" hidden><div class="dropzone" id="dropZone" role="button" tabindex="0"><div class="dropicon">↥</div><strong id="uploadTitle">Drop your audio here</strong><span id="uploadSubtitle">or click to browse · WAV, WebM, OGG, MP3</span></div><input id="audioInput" type="file" class="sr-only" accept="audio/*,.wav,.webm,.ogg,.mp3"></div>
+      <div class="file-chip" id="audioPreview" hidden><span class="file-label">AUDIO</span><strong id="audioFileName"></strong><span id="audioFileSize"></span><button id="removeAudioBtn" type="button" aria-label="Remove file">×</button></div>
+      <label class="field-label" for="languageSelect">LANGUAGE</label><select id="languageSelect"><option value="auto">Auto detect</option><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="it">Italiano</option><option value="pt">Português</option></select>
+      <button class="action-btn" id="transcribeBtn" disabled type="button">✦ &nbsp; <span>Transcribe audio</span><span class="arrow">→</span></button>
+      <div class="result"><div class="result-head"><span>TRANSCRIPT</span><button type="button" class="quiet" id="copyBtn" disabled aria-label="Copy transcript">Copy ↗</button></div><p id="transcriptText" aria-live="polite">Your transcript will appear here after processing audio.</p><div class="result-meta" id="resultMeta" hidden></div></div>
+    </article>
+    <article class="tool-card" aria-labelledby="ttsHeading">
+      <header class="card-head"><span class="card-icon mint">♫</span><div><p class="overline">02 / SPEAK</p><h2 id="ttsHeading">Text to speech</h2></div><span class="pill green">PIPER</span></header>
+      <p class="description">Give your words a voice. Companion is warmer and slower. Secretary is clearer and a little faster. Voices stay in the language you select, grouped so you can compare them.</p>
+      <label class="input-head" for="ttsInput">YOUR MESSAGE <span id="charCounter">0 / 500</span></label>
+      <textarea id="ttsInput" rows="7" maxlength="500" placeholder="Hello there! Welcome to SonicAgent. Let's create something amazing together."></textarea>
+      <div class="voice-toolbar"><div><label class="field-label" for="ttsLanguage">LANGUAGE</label><select id="ttsLanguage"><option value="">Loading…</option></select></div><div><label class="field-label" for="voiceSearch">FIND A VOICE</label><input id="voiceSearch" type="search" placeholder="Name or accent" autocomplete="off"></div></div>
+      <div id="voiceFilters" class="voice-filters" role="group" aria-label="Voice filters"></div>
+      <div id="voiceGrid" class="voice-board" role="list" aria-label="Voices for the selected language"></div>
+      <select id="ttsVoice" class="sr-only" tabindex="-1" aria-hidden="true"><option value="">Loading…</option></select>
+      <button class="action-btn mint-action" id="synthesizeBtn" disabled type="button">✦ &nbsp; <span>Generate voice</span><span class="arrow">→</span></button>
+      <p class="notice" id="ttsNotice">Piper is optional and may be disabled in this Space. Readiness is checked automatically.</p>
+    </article>
+  </section>
+  <section class="bottom">
+    <div class="info"><span class="overline">BUILT FOR DEVELOPERS</span><h3>One API. Endless possibilities.</h3><p>Connect SonicAgent to a WebXR avatar, an application, or a workflow with standard HTTP endpoints.</p><a href="/docs" target="_blank" rel="noopener">Explore API docs →</a></div>
+    <div class="endpoints"><div class="endpoint-head">AVAILABLE ENDPOINTS <span>● ● ●</span></div><div><b class="get">GET</b><code>/health/ready</code></div><div><b>POST</b><code>/v1/audio/transcriptions</code></div><div><b>POST</b><code>/v1/audio/speech</code></div><div><b class="get">GET</b><code>/v1/audio/capabilities</code></div></div>
+  </section>
+  <footer><span>© SonicAgent · Open-source voice infrastructure</span><span>Made for humans who build ✳</span></footer>
+</main>
+</div>
+<audio id="audioPlayer" class="sr-only" preload="none"></audio>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

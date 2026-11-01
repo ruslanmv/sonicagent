@@ -13,6 +13,9 @@ creation, model/voice information, and metrics.
 | `GET /v1/voices` | Lists known voices. |
 | `GET /v1/models/stt` | Lists known speech-to-text models. |
 | `GET /metrics` | Prometheus-style metrics. |
+| `GET /v1/audio/capabilities` | Bearer token. Reports STT and TTS readiness. |
+| `POST /v1/audio/transcriptions` | Bearer token. Multipart audio in, JSON transcript out. |
+| `POST /v1/audio/speech` | Bearer token. Optional Piper WAV. Returns 503 when TTS is not installed. |
 
 ## Session creation in plain language
 
@@ -21,6 +24,6 @@ session. The backend returns a session ID, a resume token, and the WebSocket URL
 
 ## Current status
 
-Some REST endpoints are still development implementations. Do not expose them to
-the public internet until authentication, origin checks, rate limits, and schema
-tests are complete.
+`/v1/sessions` is still a development session scaffold. Do not treat its token as a speech credential.
+
+`/v1/audio/transcriptions` requires `SONIC_API_KEY`. `/health/live` can return 200 while `/health/ready` is false. Field details, error codes, and the local and Space deploy steps are in `hf/README.md` and [Speech recognition](../speech-recognition.md).

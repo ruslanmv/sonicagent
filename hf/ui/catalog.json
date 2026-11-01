@@ -1,0 +1,346 @@
+{
+  "locales": [
+    {
+      "id": "en-US",
+      "label": "English (US)",
+      "voices": [
+        {
+          "id": "en_US-kristin-medium",
+          "label": "Kristin · Companion",
+          "role": "companion",
+          "sample": "Hello. Stay with me a moment."
+        },
+        {
+          "id": "en_US-lessac-medium",
+          "label": "Lessac · Secretary",
+          "role": "secretary",
+          "sample": "Good morning. How can I help you?"
+        },
+        {
+          "id": "en_US-amy-low",
+          "label": "Amy · female",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-amy-medium",
+          "label": "Amy · female",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-hfc_female-medium",
+          "label": "HFC Female · female",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-kathleen-low",
+          "label": "Kathleen · female",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-arctic-medium",
+          "label": "Arctic",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-libritts_r-medium",
+          "label": "LibriTTS",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-bryce-medium",
+          "label": "Bryce · male",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-danny-low",
+          "label": "Danny · male",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-hfc_male-medium",
+          "label": "HFC Male · male",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-joe-medium",
+          "label": "Joe · male",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-john-medium",
+          "label": "John · male",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-norman-medium",
+          "label": "Norman · male",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-ryan-low",
+          "label": "Ryan · male",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_US-ryan-medium",
+          "label": "Ryan · male",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        }
+      ]
+    },
+    {
+      "id": "en-GB",
+      "label": "English (UK)",
+      "voices": [
+        {
+          "id": "en_GB-cori-medium",
+          "label": "Cori · Companion",
+          "role": "companion",
+          "sample": "Hello. Stay with me a moment."
+        },
+        {
+          "id": "en_GB-alba-medium",
+          "label": "Alba · Secretary",
+          "role": "secretary",
+          "sample": "Good morning. How can I help you?"
+        },
+        {
+          "id": "en_GB-jenny_dioco-medium",
+          "label": "Jenny · female",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_GB-southern_english_female-low",
+          "label": "Southern English · female",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_GB-aru-medium",
+          "label": "Aru",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_GB-alan-medium",
+          "label": "Alan · male",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        },
+        {
+          "id": "en_GB-northern_english_male-medium",
+          "label": "Northern English · male",
+          "role": "catalog",
+          "sample": "Hello. This is an English voice."
+        }
+      ]
+    },
+    {
+      "id": "es-ES",
+      "label": "Español (España)",
+      "voices": [
+        {
+          "id": "es_ES-sharvard-companion",
+          "label": "Sharvard · Companion",
+          "role": "companion",
+          "sample": "Hola. Quédate conmigo un momento."
+        },
+        {
+          "id": "es_ES-sharvard-secretary",
+          "label": "Sharvard · Secretary",
+          "role": "secretary",
+          "sample": "Buenos días. ¿En qué puedo ayudarle?"
+        },
+        {
+          "id": "es_ES-sharvard-male",
+          "label": "Sharvard · male",
+          "role": "catalog",
+          "sample": "Hola. Esta es una voz en español."
+        },
+        {
+          "id": "es_ES-carlfm-x_low",
+          "label": "Carlfm · male",
+          "role": "catalog",
+          "sample": "Hola. Esta es una voz en español."
+        },
+        {
+          "id": "es_ES-davefx-medium",
+          "label": "DaveFX · male",
+          "role": "catalog",
+          "sample": "Hola. Esta es una voz en español."
+        }
+      ]
+    },
+    {
+      "id": "es-MX",
+      "label": "Español (México)",
+      "voices": [
+        {
+          "id": "es_MX-ald-companion",
+          "label": "Ald · Companion",
+          "role": "companion",
+          "sample": "Hola. Quédate conmigo un momento."
+        },
+        {
+          "id": "es_MX-ald-medium",
+          "label": "Ald · Secretary",
+          "role": "secretary",
+          "sample": "Buenos días. ¿En qué le puedo ayudar?"
+        },
+        {
+          "id": "es_MX-claude-high",
+          "label": "Claude · male",
+          "role": "catalog",
+          "sample": "Hola. Esta es una voz en español."
+        }
+      ]
+    },
+    {
+      "id": "fr-FR",
+      "label": "Français",
+      "voices": [
+        {
+          "id": "fr_FR-upmc-medium",
+          "label": "Jessica · Companion",
+          "role": "companion",
+          "sample": "Bonjour. Reste avec moi un instant."
+        },
+        {
+          "id": "fr_FR-siwis-medium",
+          "label": "Siwis · Secretary",
+          "role": "secretary",
+          "sample": "Bonjour. Comment puis-je vous aider ?"
+        },
+        {
+          "id": "fr_FR-siwis-low",
+          "label": "Siwis · female",
+          "role": "catalog",
+          "sample": "Bonjour. Ceci est une voix française."
+        },
+        {
+          "id": "fr_FR-gilles-low",
+          "label": "Gilles · male",
+          "role": "catalog",
+          "sample": "Bonjour. Ceci est une voix française."
+        },
+        {
+          "id": "fr_FR-upmc-pierre",
+          "label": "Pierre · male",
+          "role": "catalog",
+          "sample": "Bonjour. Ceci est une voix française."
+        },
+        {
+          "id": "fr_FR-tom-medium",
+          "label": "Tom · male",
+          "role": "catalog",
+          "sample": "Bonjour. Ceci est une voix française."
+        }
+      ]
+    },
+    {
+      "id": "de-DE",
+      "label": "Deutsch",
+      "voices": [
+        {
+          "id": "de_DE-eva_k-x_low",
+          "label": "Eva K · Companion",
+          "role": "companion",
+          "sample": "Hallo. Bleib einen Moment bei mir."
+        },
+        {
+          "id": "de_DE-kerstin-low",
+          "label": "Kerstin · Secretary",
+          "role": "secretary",
+          "sample": "Guten Tag. Wie kann ich Ihnen helfen?"
+        },
+        {
+          "id": "de_DE-mls-medium",
+          "label": "Mls",
+          "role": "catalog",
+          "sample": "Hallo. Das ist eine deutsche Stimme."
+        },
+        {
+          "id": "de_DE-thorsten_emotional-medium",
+          "label": "Thorsten Emotional",
+          "role": "catalog",
+          "sample": "Hallo. Das ist eine deutsche Stimme."
+        },
+        {
+          "id": "de_DE-karlsson-low",
+          "label": "Karlsson · male",
+          "role": "catalog",
+          "sample": "Hallo. Das ist eine deutsche Stimme."
+        },
+        {
+          "id": "de_DE-pavoque-low",
+          "label": "Pavoque · male",
+          "role": "catalog",
+          "sample": "Hallo. Das ist eine deutsche Stimme."
+        },
+        {
+          "id": "de_DE-thorsten-medium",
+          "label": "Thorsten · male",
+          "role": "catalog",
+          "sample": "Hallo. Das ist eine deutsche Stimme."
+        }
+      ]
+    },
+    {
+      "id": "it-IT",
+      "label": "Italiano",
+      "voices": [
+        {
+          "id": "it_IT-paola-companion",
+          "label": "Paola · Companion",
+          "role": "companion",
+          "sample": "Ciao. Resta con me un momento."
+        },
+        {
+          "id": "it_IT-paola-medium",
+          "label": "Paola · Secretary",
+          "role": "secretary",
+          "sample": "Buongiorno. Come posso aiutarla?"
+        },
+        {
+          "id": "it_IT-riccardo-x_low",
+          "label": "Riccardo · male",
+          "role": "catalog",
+          "sample": "Ciao. Questa è una voce italiana."
+        }
+      ]
+    },
+    {
+      "id": "pt-BR",
+      "label": "Português",
+      "voices": [
+        {
+          "id": "pt_BR-edresson-low",
+          "label": "Edresson · male",
+          "role": "catalog",
+          "sample": "Olá. Esta é uma voz em português."
+        },
+        {
+          "id": "pt_BR-faber-medium",
+          "label": "Faber · male",
+          "role": "catalog",
+          "sample": "Olá. Esta é uma voz em português."
+        }
+      ]
+    }
+  ]
+}

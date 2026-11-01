@@ -6,4 +6,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check whether dependency review is available
+        id: support
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          body=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/dependency-graph/compare/${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" 2>&1)
+          code=$?
+          if [ "$code" -eq 0 ]; then
+            echo "supported=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if echo "$body" | grep -Eqi "not supported|Advanced Security|Forbidden|Resource not accessible"; then
+            echo "supported=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Dependency review unavailable::This private repository cannot run dependency review until the dependency graph and GitHub Advanced Security are enabled. The pull request is not blocked by that repository setting."
+            exit 0
+          fi
+          echo "$body"
+          exit "$code"
       - uses: actions/dependency-review-action@v4
+        if: steps.support.outputs.supported == 'true'
