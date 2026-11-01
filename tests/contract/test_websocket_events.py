@@ -1,5 +1,18 @@
-import pytest
+from sonicagent_rt.protocol.constants import SERVER_EVENTS
 
-@pytest.mark.skip(reason="Production behavior for Test Websocket Events is not implemented in the scaffold")
-def test_placeholder() -> None:
-    pass
+
+def test_realtime_events_are_in_the_server_catalog() -> None:
+    required = {
+        "session.created",
+        "speech.started",
+        "speech.stopped",
+        "transcript.final",
+        "response.created",
+        "response.text.delta",
+        "response.text.done",
+        "response.audio.done",
+        "response.cancelled",
+        "metrics.turn",
+        "error",
+    }
+    assert required <= set(SERVER_EVENTS)

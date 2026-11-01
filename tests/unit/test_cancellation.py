@@ -1,5 +1,19 @@
-import pytest
+import asyncio
 
-@pytest.mark.skip(reason="Production behavior for Test Cancellation is not implemented in the scaffold")
-def test_placeholder() -> None:
-    pass
+from sonicagent_rt.pipeline.cancellation import CancellationToken
+
+
+def test_cancellation_token_is_observable() -> None:
+    token = CancellationToken()
+    assert token.cancelled is False
+    token.cancel()
+    assert token.cancelled is True
+
+    async def wait() -> bool:
+        fresh = CancellationToken()
+        waiter = asyncio.create_task(fresh.wait())
+        fresh.cancel()
+        await waiter
+        return fresh.cancelled
+
+    assert asyncio.run(wait()) is True

@@ -27,7 +27,7 @@ The root `docker compose up` file starts the mock API and the unfinished web cli
 - An origin allowlist for any browser that calls the API with cookies.
 - Rate limits and a concurrency cap. The public demo already has its own caps.
 - A persistent model cache outside Git.
-- Voice checksums filled in. Piper hashes in the registry are still `TODO`.
+- Voice checksums in `voices.json` checked against the installed ONNX and config files.
 - Monitoring that records timings and error codes, not transcript text.
 - A rollback plan.
 

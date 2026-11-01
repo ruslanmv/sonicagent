@@ -49,7 +49,7 @@ def test_report_states_the_measurement_limits() -> None:
     )
     assert "not a Quest, phone, or glasses test" in text
     assert "does not stream partial audio" in text
-    assert "realtime speech as not implemented" in text
+    assert "does not time barge-in" in text
     assert "| tts_it_paola | 5 | 0 | 290 | 420 | 510 | 600 | 0.700 |" in text
 
 

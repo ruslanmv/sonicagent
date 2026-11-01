@@ -1,6 +1,6 @@
 # Production status
 
-SonicAgent serves batch speech today. It is not a production realtime voice assistant, and the Hugging Face Space is not a service level.
+SonicAgent serves batch speech and an authenticated realtime turn. The Hugging Face Space is not a service level, and this repository does not claim a Quest result.
 
 ## What runs
 
@@ -13,18 +13,18 @@ SonicAgent serves batch speech today. It is not a production realtime voice assi
 | Privacy defaults | Audio and transcripts are not stored. Transcript text is not a log field. |
 | Hosts | `hf/` image for a local PC, and the same image on the existing Space. CPU Basic can sleep. |
 | Measurements | One client-observed HTTP pass is in `benchmarks/reports/hf-cpu-basic-endpoint-capability.md`. |
+| Realtime turn | Bearer-authenticated `POST /v1/sessions`, then a resume token on `/v1/realtime/{id}`. Energy endpointing, barge-in, and phrase audio when Piper is ready. |
+| Voice checksums | Every `voices.json` entry has a sha256 for the ONNX file and its config. Whisper Tiny stays pinned separately. |
 
 ## Still open
 
 | Area | Why it is still open |
 | --- | --- |
-| Realtime sessions | The WebSocket accepts a connection. It does not run VAD, transcription, an LLM, or playback. |
-| Silero VAD and barge-in | Interfaces only. |
-| Streaming LLM | The included provider is a mock. |
-| Browser AudioWorklet | The page at `clients/web` is a scaffold. Voice Studio is the browser that runs. |
-| Voice checksums | Piper entries in `model_registry/voices.json` still use `TODO` hashes. Whisper Tiny is pinned. |
+| Silero VAD | No Silero file is bundled. Energy endpointing is the detector that runs. |
+| Browser AudioWorklet | `clients/web` is still a scaffold. Voice Studio uses the batch HTTP API. |
+| Default language model | `SONIC_LLM_PROVIDER` defaults to `mock`. Set `ollama` or `openai-compatible` and `SONIC_LLM_BASE_URL` for a real model. |
 | OllaBridge and Quest | Cloud does not route audio yet. No physical headset test is claimed. |
-| Operations | TLS, short-lived session tokens, origin allowlists, and a reviewed threat model are not finished for a public realtime service. |
+| Always-on hosting | TLS in front of your own machine is an operator step. CPU Basic can sleep. |
 
 ## What is safe to do now
 
@@ -36,13 +36,13 @@ SonicAgent serves batch speech today. It is not a production realtime voice assi
 ## What not to do
 
 - Do not describe the Space as always on, on-device, or a Quest latency result.
-- Do not put `SONIC_API_KEY` in a browser build or a public README.
+- Do not put `SONIC_API_KEY` or a resume token in a browser build, a public README, or an access log.
 - Do not commit model binaries, private audio, transcripts, local caches, or secrets.
 - Do not treat `/health/live` as model readiness.
 
 ## Before calling a deployment production
 
 - `make install`, `make test`, and `make lint` pass from a clean checkout.
-- Voice checksums replace the `TODO` hashes, and licenses stay attached to the models.
+- Voice checksums in `voices.json` match the files you install, and licenses stay attached to the models.
 - The security checklist in `docs/security.md` is complete for the exposed routes.
 - A new measurement names the machine, the commit, and the warm-up policy, and it is not quoted as a headset service level.

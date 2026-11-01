@@ -68,8 +68,8 @@ def render_markdown(report: dict[str, object]) -> str:
             "",
             "A conversational headset needs the first sound soon after the person stops speaking. "
             "This deployment answers with one batch request: record, upload, wait, then play. "
-            "`/health/ready` reports realtime speech as not implemented, so barge-in and "
-            "phrase-by-phrase playback are not available on this path.",
+            "This probe measures one batch response. It does not time barge-in or "
+            "phrase-by-phrase playback on the realtime socket.",
             "",
             "Preset example WAVs are a different path. They are static files. A client can start "
             "those lines after a download, without Piper. Generated lines cannot.",

@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Request
 
+from sonicagent_rt.api.realtime_status import realtime_status
+
 router = APIRouter(tags=["health"])
 
 
@@ -14,7 +16,7 @@ async def ready(request: Request) -> dict[str, object]:
             "ready": False,
             "stt": {"available": False, "ready": False, "reason": "voice-disabled"},
             "tts": {"available": False, "ready": False, "reason": "voice-disabled"},
-            "realtime": {"available": False, "ready": False, "reason": "not-implemented"},
+            "realtime": realtime_status(settings, stt),
             "missing": ["stt"],
         }
     is_ready = bool(stt.ready)
@@ -23,6 +25,6 @@ async def ready(request: Request) -> dict[str, object]:
         "ready": is_ready,
         "stt": stt.as_dict(),
         "tts": tts.as_dict(),
-        "realtime": {"available": False, "ready": False, "reason": "not-implemented"},
+        "realtime": realtime_status(settings, stt),
         "missing": [] if is_ready else ["stt"],
     }

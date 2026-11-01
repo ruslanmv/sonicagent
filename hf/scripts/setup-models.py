@@ -9,6 +9,7 @@ is true and both the ONNX file and its JSON config are present.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import urllib.request
@@ -17,14 +18,27 @@ from pathlib import Path
 VOICE_BASE = "https://huggingface.co/ruslanmv/hp-piper-voices/resolve/main"
 
 
-def _download(url: str, destination: Path) -> None:
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _download(url: str, destination: Path, expected_sha256: str) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
-    if destination.is_file() and destination.stat().st_size > 0:
+    if destination.is_file() and _sha256(destination) == expected_sha256:
         print(f"already present: {destination}")
         return
+    if destination.is_file():
+        destination.unlink()
     print(f"downloading {url}")
     with urllib.request.urlopen(url, timeout=120) as response:  # noqa: S310 - explicit model URL
         destination.write_bytes(response.read())
+    if _sha256(destination) != expected_sha256:
+        destination.unlink()
+        raise RuntimeError(f"checksum mismatch for {destination.name}")
 
 
 def _registry_path() -> Path:
@@ -50,8 +64,8 @@ def install_voices(cache_dir: Path) -> None:
         if not model_path or model_path in seen:
             continue
         seen.add(model_path)
-        _download(f"{base}/{model_path}", voice_dir / Path(model_path).name)
-        _download(f"{base}/{config_path}", voice_dir / Path(config_path).name)
+        _download(f"{base}/{model_path}", voice_dir / Path(model_path).name, str(item.get("model_sha256") or ""))
+        _download(f"{base}/{config_path}", voice_dir / Path(config_path).name, str(item.get("config_sha256") or ""))
         print(f"voice ready: {Path(model_path).stem}")
 
 

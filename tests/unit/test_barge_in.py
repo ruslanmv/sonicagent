@@ -1,5 +1,7 @@
-import pytest
+"""Barge-in is covered by the realtime socket test."""
 
-@pytest.mark.skip(reason="Production behavior for Test Barge In is not implemented in the scaffold")
-def test_placeholder() -> None:
-    pass
+from tests.unit.test_realtime_session import test_barge_in_cancels_the_active_turn
+
+
+def test_barge_in_cancels_a_blocking_transcription() -> None:
+    test_barge_in_cancels_the_active_turn()
