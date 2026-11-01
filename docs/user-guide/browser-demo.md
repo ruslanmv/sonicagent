@@ -12,7 +12,7 @@ The public demo does this only when `SONIC_PUBLIC_DEMO_ENABLED` is on. Otherwise
 
 Choose a language. The list shows only that language. Italiano is Paola and Riccardo. Español is the Spanish voices. Companion and Secretary are the female presets. Male speakers stay labeled male.
 
-Press the card control to play a saved example, or generate a line. Playback stays on that card. There is no separate player bar.
+Press the card control to play a saved example, or generate a line. Playback stays on that card. There is no separate player bar. After a line is generated, Download speech at the bottom of the Speak card saves that WAV.
 
 ## The other browser page
 

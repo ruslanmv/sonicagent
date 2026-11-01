@@ -8,7 +8,7 @@ SonicAgent serves batch speech and an authenticated realtime turn. The Hugging F
 | --- | --- |
 | Batch speech to text | Multilingual Whisper Tiny on CPU INT8. English, Spanish, French, German, Italian, and Portuguese. |
 | Batch speech synthesis | Piper WAV for every voice in `ruslanmv/hp-piper-voices`. Companion and Secretary are the female presets where a female speaker exists. Portuguese voices in that mirror are male and stay labeled male. |
-| Voice Studio | Record, then transcribe. Language-scoped voice cards. Card playback. Served at `/` by the voice image and by the Space `ruslanmv/SonicAgent`. |
+| Voice Studio | Record, then transcribe. Language-scoped voice cards. Card playback. Download speech saves the generated WAV. Served at `/` by the voice image and by the Space `ruslanmv/SonicAgent`. |
 | Access control | Bearer token on `/v1/audio/*`. The public demo stays off unless `SONIC_PUBLIC_DEMO_ENABLED` is set. |
 | Privacy defaults | Audio and transcripts are not stored. Transcript text is not a log field. |
 | Hosts | `hf/` image for a local PC, and the same image on the existing Space. CPU Basic can sleep. |
