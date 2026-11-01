@@ -7,8 +7,11 @@ from sonicagent_rt.api.errors import error_response
 from sonicagent_rt.api.middleware import install_upload_limit
 from sonicagent_rt.api.routes import health, metrics, models, readiness, sessions, voices
 from sonicagent_rt.api.routes.audio import InFlightRequests, router as audio_router
+from sonicagent_rt.api.routes.speech_stream import router as speech_stream_router
 from sonicagent_rt.api.websocket.endpoint import router as websocket_router
+from sonicagent_rt.api.websocket.speech_endpoint import router as speech_socket_router
 from sonicagent_rt.config import Settings, get_settings
+from sonicagent_rt.speech_stream.store import SpeechStreamStore
 from sonicagent_rt.lifespan import app_lifespan
 from sonicagent_rt.llm.factory import create_llm
 from sonicagent_rt.security.rate_limits import SlidingWindowLimiter
@@ -27,6 +30,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.tts = create_tts_engine(resolved)
     app.state.llm = create_llm(resolved)
     app.state.sessions = SessionManager(resolved)
+    app.state.speech_streams = SpeechStreamStore(
+        ttl_sec=resolved.session_ttl_sec,
+        max_sessions=resolved.max_concurrent_sessions,
+    )
     app.state.rate_limiter = SlidingWindowLimiter(resolved.stt_rate_limit_per_minute)
     app.state.inflight = InFlightRequests()
 
@@ -52,6 +59,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(voices.router, prefix="/v1")
     app.include_router(models.router, prefix="/v1")
     app.include_router(audio_router, prefix="/v1")
+    app.include_router(speech_stream_router, prefix="/v1")
     app.include_router(metrics.router)
     app.include_router(websocket_router, prefix="/v1")
+    app.include_router(speech_socket_router, prefix="/v1")
     return app

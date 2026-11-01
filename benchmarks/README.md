@@ -15,4 +15,6 @@ python -m benchmarks.endpoints.probe \
 
 Without `SONIC_API_KEY`, the probe uses the public demo and keeps the sample count small. Results under `benchmarks/results/` stay out of Git. A published snapshot belongs in `benchmarks/reports/` only after a real run.
 
-The published numbers describe one client and one host. They are not a Quest, phone, or glasses measurement, and they are not a service level.
+The published HTTP numbers describe one Linux client and one host. They are not a Quest, phone, or glasses measurement, and they are not a service level.
+
+`benchmarks/reports/quest3-browser-2d-local-whisper-tiny.md` is a separate, single headset run of local Whisper Tiny in the Quest 3 browser. It is not a SonicAgent streaming result.
