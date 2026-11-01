@@ -43,6 +43,8 @@
     E.transcribeBtn.disabled = !authenticated() || !S.file || S.busy || S.recording;
     E.synthesizeBtn.disabled = !authenticated() || !E.ttsInput.value.trim() || S.busy || !S.ttsReady || (S.mode === "demo" && !S.demoTts);
     E.recordBtn.disabled = S.busy && !S.recording;
+    E.downloadSpeechBtn.disabled = !S.speechBlob;
+    E.downloadSpeechBtn.classList.toggle("is-ready", !!S.speechBlob);
     if (!S.ttsReady) E.ttsNotice.textContent = "Piper is not available on this server. Install and enable a voice model to use TTS.";
     else if (S.mode === "demo" && !S.demoTts) E.ttsNotice.textContent = "The Space owner has disabled public voice synthesis; owner testing remains available.";
     else E.ttsNotice.textContent = voiceNotice();
@@ -595,13 +597,12 @@
         body:JSON.stringify(body)
       },90000);
       if(!resp.ok)throw new Error(await errorMessage(resp));
-      if(!/audio|octet-stream/i.test(resp.headers.get("content-type") || ""))throw new Error("Expected WAV audio");
       var blob=await resp.blob();
-      if(!blob.size)throw new Error("Empty speech response");
+      var head=new Uint8Array(await blob.slice(0,4).arrayBuffer());
+      var mark=String.fromCharCode.apply(null, head);
+      if(!blob.size || mark!=="RIFF")throw new Error("Expected WAV audio");
       S.speechBlob=blob;
       S.speechName="sonicagent-"+String(voiceId || "speech").replace(/[^a-zA-Z0-9._-]+/g,"-").slice(0,80)+".wav";
-      E.downloadSpeechBtn.disabled=false;
-      E.downloadSpeechBtn.textContent="Download speech";
       S.playingId=voiceId;
       playUrl(URL.createObjectURL(blob), true);
     } catch(err){
