@@ -1,6 +1,6 @@
 # Getting started
 
-The beginner-friendly setup guide has moved to
+Speech runs from the voice image. The beginner path is
 [Install and run](user-guide/install-and-run.md).
 
 If you are new to SonicAgent-RT, read these pages in order:

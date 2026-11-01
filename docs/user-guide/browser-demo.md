@@ -1,31 +1,19 @@
-# Use the browser demo
+# Voice Studio
 
-The browser demo is the easiest way to see how SonicAgent-RT is intended to feel.
-It is currently a development demo, not a finished product.
+Voice Studio is the page that runs. Open it on the voice image at `http://127.0.0.1:8000/` or on the Space [ruslanmv/SonicAgent](https://huggingface.co/spaces/ruslanmv/SonicAgent).
 
-## Open the page
+## Listen
 
-1. Start the app with `make run`.
-2. Open `http://localhost:5173` in a modern browser.
-3. Use a local development machine when possible. Microphone permissions and
-audio behavior vary by browser and operating system.
+Press the microphone and speak. Transcription starts when you stop. You do not press a second button for the first pass. The button becomes "Transcribe again" if you want another pass on the same recording.
 
-## What the finished demo should show
+The public demo does this only when `SONIC_PUBLIC_DEMO_ENABLED` is on. Otherwise paste the bearer token into the page. The token stays in that tab.
 
-The product goal is a clear voice-assistant dashboard with:
+## Speak
 
-- Connection status.
-- Microphone status.
-- Listening, thinking, speaking, interrupted, and error states.
-- Transcript timeline.
-- Assistant audio playback.
-- Voice and language settings for English and Italian profiles.
-- Latency information for each turn.
-- A clear recovery path when something fails.
+Choose a language. The list shows only that language. Italiano is Paola and Riccardo. Español is the Spanish voices. Companion and Secretary are the female presets. Male speakers stay labeled male.
 
-## Current limitations
+Press the card control to play a saved example, or generate a line. Playback stays on that card. There is no separate player bar.
 
-The current repository still contains unfinished browser and backend paths.
-If the page starts but no complete voice conversation works, check
-[Production status](../production-status.md). Use deterministic tests and smoke
-checks to verify what is implemented today.
+## The other browser page
+
+`make dev` also serves `http://localhost:5173`. That page is the unfinished realtime client. It is not Voice Studio, and it does not run a live turn.

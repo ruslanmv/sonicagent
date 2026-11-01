@@ -1,64 +1,48 @@
 # Production status
 
-SonicAgent-RT is **not production-ready yet**.
+SonicAgent serves batch speech today. It is not a production realtime voice assistant, and the Hugging Face Space is not a service level.
 
-This page is intentionally direct so users do not mistake a development checkout
-for a deployable voice-assistant platform.
+## What runs
 
-## Verified in the current implementation pass
+| Area | State |
+| --- | --- |
+| Batch speech to text | Multilingual Whisper Tiny on CPU INT8. English, Spanish, French, German, Italian, and Portuguese. |
+| Batch speech synthesis | Piper WAV for every voice in `ruslanmv/hp-piper-voices`. Companion and Secretary are the female presets where a female speaker exists. Portuguese voices in that mirror are male and stay labeled male. |
+| Voice Studio | Record, then transcribe. Language-scoped voice cards. Card playback. Served at `/` by the voice image and by the Space `ruslanmv/SonicAgent`. |
+| Access control | Bearer token on `/v1/audio/*`. The public demo stays off unless `SONIC_PUBLIC_DEMO_ENABLED` is set. |
+| Privacy defaults | Audio and transcripts are not stored. Transcript text is not a log field. |
+| Hosts | `hf/` image for a local PC, and the same image on the existing Space. CPU Basic can sleep. |
+| Measurements | One client-observed HTTP pass is in `benchmarks/reports/hf-cpu-basic-endpoint-capability.md`. |
 
-These checks were run successfully in the development environment:
+## Still open
 
-```bash
-make install
-python -m sonicagent_rt --help
-python -c "import sonicagent_rt; print(sonicagent_rt.__version__)"
-make test
-make lint
-make smoke
-```
-
-However, successful completion of these checks does not mean the full product is
-ready. Some commands run with fake providers, and some tests still report known
-scaffold skips.
-
-## Known blockers
-
-| Area | Status | Why it matters |
-| --- | --- | --- |
-| Runtime dependencies | Not fully installed in restricted environments | The backend cannot start without packages such as `fastapi` and `uvicorn`. |
-| VAD endpointing | Incomplete | The server must reliably detect when a user starts and stops speaking. |
-| STT batch API | Implemented for multilingual Tiny on CPU | Realtime streaming, GPU hosting, and a verified Space deployment are still open. |
-| Piper batch WAV | Every voice in `ruslanmv/hp-piper-voices`, with female Companion and Secretary presets where a female speaker exists | Portuguese voices in that mirror are male and stay labeled male. Phrase-pipelined realtime playback is still open. |
-| Barge-in | Incomplete | Users must be able to interrupt assistant speech safely. |
-| Browser demo | Incomplete | The user interface still needs complete microphone, playback, reconnect, and status handling. |
-| Model registry | Incomplete | Model checksums and attribution must be verified before release. |
-| Security hardening | Incomplete | Authentication, origins, rate limits, and privacy controls need full review. |
-| Test suite | Incomplete | Existing skipped scaffold tests must be replaced with meaningful coverage. |
+| Area | Why it is still open |
+| --- | --- |
+| Realtime sessions | The WebSocket accepts a connection. It does not run VAD, transcription, an LLM, or playback. |
+| Silero VAD and barge-in | Interfaces only. |
+| Streaming LLM | The included provider is a mock. |
+| Browser AudioWorklet | The page at `clients/web` is a scaffold. Voice Studio is the browser that runs. |
+| Voice checksums | Piper entries in `model_registry/voices.json` still use `TODO` hashes. Whisper Tiny is pinned. |
+| OllaBridge and Quest | Cloud does not route audio yet. No physical headset test is claimed. |
+| Operations | TLS, short-lived session tokens, origin allowlists, and a reviewed threat model are not finished for a public realtime service. |
 
 ## What is safe to do now
 
-- Read the documentation.
-- Run deterministic unit, contract, web, and fake-provider smoke checks.
-- Develop and test isolated components.
-- Use fake providers for demos that do not claim real-model performance.
+- Run the voice image or open Voice Studio on the Space.
+- Call the authenticated batch routes.
+- Run unit, contract, and web tests.
+- Read the endpoint report as a measurement of that client and that host.
 
-## What not to do yet
+## What not to do
 
-- Do not expose the development server to the public internet.
-- Do not process private customer audio or transcripts.
-- Do not claim verified latency or production readiness.
+- Do not describe the Space as always on, on-device, or a Quest latency result.
+- Do not put `SONIC_API_KEY` in a browser build or a public README.
 - Do not commit model binaries, private audio, transcripts, local caches, or secrets.
+- Do not treat `/health/live` as model readiness.
 
-## Release readiness checklist
+## Before calling a deployment production
 
-Before a production release, the project needs:
-
-- `make install`, `make run`, `make test`, `make lint`, and `make smoke` to pass
-  from a clean checkout with documented dependencies.
-- No placeholder-only skipped tests in required suites.
-- Real-model model download and verification workflows.
-- End-to-end browser and Python-client demos.
-- Documented security, privacy, deployment, and rollback procedures.
-- Benchmark reports with hardware, commit hash, provider versions, and honest
-  latency numbers.
+- `make install`, `make test`, and `make lint` pass from a clean checkout.
+- Voice checksums replace the `TODO` hashes, and licenses stay attached to the models.
+- The security checklist in `docs/security.md` is complete for the exposed routes.
+- A new measurement names the machine, the commit, and the warm-up policy, and it is not quoted as a headset service level.

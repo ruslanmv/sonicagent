@@ -1,11 +1,11 @@
 # RFC: SonicAgent voice interoperability with OllaBridge Cloud and 3D-Avatar-Chatbot
 
-**Status:** Planning / proposed; **no runtime functionality is implemented by this RFC**  
+**Status:** OllaBridge and Avatar work is still proposed. SonicAgent batch speech, Voice Studio, and the Space `ruslanmv/SonicAgent` are implemented on this branch. This document does not change OllaBridge or the Avatar.  
 **Date:** 2026-10-31  
 **Target repositories:** [SonicAgent](https://github.com/ruslanmv/sonicagent) (this RFC), [OllaBridge](https://github.com/ruslanmv/ollabridge), [OllaBridge Cloud](https://github.com/ruslanmv/ollabridge-cloud), [3D-Avatar-Chatbot](https://github.com/ruslanmv/3D-Avatar-Chatbot/tree/claude/awesome-brown-khqcdj) (target feature branch)  
 **Motivation:** reliable, privacy-aware English/Italian STT and optional TTS for desktop, Meta Quest Browser WebXR VR/MR, and desktop Chrome on Windows through Quest Air Link, with **one OllaBridge pairing** and **no paid Google/Azure/OpenAI speech API dependency**.
 
-> This is a plan-only PR. Every endpoint, transport extension, and implementation item marked *proposed* must be built and tested in later PRs; existing scaffolds must not be advertised as operational capabilities.
+> OllaBridge routing, the Avatar provider, and realtime streaming are still proposed. Do not describe those as running. SonicAgent's batch HTTP API is running and is documented in the README.
 
 ## 1. Decision and scope
 
@@ -21,9 +21,9 @@
 
 | Repository and source | Verified today | Gap |
 | --- | --- | --- |
-| SonicAgent [README](../../README.md), [STT module](../../src/sonicagent_rt/stt/faster_whisper.py), [Piper module](../../src/sonicagent_rt/tts/piper_process.py) | FastAPI, protocol definitions, interfaces and deployment scaffold; STT/TTS are explicit TODOs | No real audio transcription or synthesis yet |
-| SonicAgent [WebSocket endpoint](../../src/sonicagent_rt/api/websocket/endpoint.py) | Accepts a WS, answers ping and cancellation with scaffold messages; audio frames are acknowledged as **not implemented** | No real VAD/STT/LLM/TTS pipeline, no production auth |
-| SonicAgent [session route](../../src/sonicagent_rt/api/routes/sessions.py), [browser capture](../../clients/web/src/audio/capture.ts), [models](../../model_registry/stt_models.json) | Session route uses `development-token`; browser AudioWorklet client is a placeholder; model entries not validated | Implement and harden before public exposure |
+| SonicAgent [README](../../README.md), [STT module](../../src/sonicagent_rt/stt/faster_whisper.py), [Piper module](../../src/sonicagent_rt/tts/piper_process.py) | Batch Whisper Tiny and batch Piper run. Voice Studio and the Space serve them. | Realtime turns, voice checksum pins, and a production service level |
+| SonicAgent [WebSocket endpoint](../../src/sonicagent_rt/api/websocket/endpoint.py) | Accepts a WS, answers ping and cancellation; audio frames are acknowledged as **not implemented** | No VAD, streaming LLM, or barge-in on this socket |
+| SonicAgent [session route](../../src/sonicagent_rt/api/routes/sessions.py), [browser capture](../../clients/web/src/audio/capture.ts), [models](../../model_registry/stt_models.json) | Session route is still a development scaffold. Voice Studio is the browser that runs. Whisper Tiny is pinned. Piper hashes are still `TODO` | Harden the realtime session before public exposure |
 | OllaBridge [chat route](https://github.com/ruslanmv/ollabridge/blob/master/src/ollabridge/api/main.py), [avatar relay](https://github.com/ruslanmv/ollabridge/blob/master/src/ollabridge/api/avatar_session.py) | Local Ollama-compatible chat and existing authenticated avatar socket relay | No general SonicAgent STT/TTS API |
 | OllaBridge local [CloudBridgeManager](https://github.com/ruslanmv/ollabridge/blob/master/src/ollabridge/cloud/bridge_manager.py) | Persistent device-to-cloud relay with reconnect/capability advertisements | No SonicAgent voice capability or dispatch |
 | OllaBridge Cloud [RelayHub](https://github.com/ruslanmv/ollabridge-cloud/blob/master/src/ollabridge_cloud/services/relay_hub.py), [homepilot media pattern](https://github.com/ruslanmv/ollabridge-cloud/blob/master/src/ollabridge_cloud/api/homepilot_media_bridge.py) | User/device-scoped JSON request-response relay; a media endpoint already converts bounded bytes through base64 | Not a low-latency bidirectional **binary** audio relay; do not send continuous 20ms PCM as JSON RPC |
@@ -131,15 +131,13 @@ Keep source STT and LLM separate: `transcript.final` goes to Avatar's canonical 
 
 ## 6. SonicAgent implementation tasks
 
-### P0 — real batch STT, independently usable locally
-- Replace `stt/faster_whisper.py` and `stt/factory.py` TODOs with a production-shaped adapter using CTranslate2/`faster-whisper` on CPU int8; validate a tiny/base English+Italian candidate **with real recordings**. Decode uploaded media with a pinned decoder (FFmpeg/PyAV or verified equivalent), resample to mono 16k for inference, handle silence/empty audio, language selection, VAD optional, worker concurrency and cancellation.
-- Provide `POST /v1/audio/transcriptions` (internal SonicAgent API), `/health/ready` linked to actually loaded models, and model metadata with correct availability. Never return fake transcripts.
-- Pin dependencies and model versions/checksums; validate licenses before using voice/model mirrors. Download models in an explicit installation/warm-up step (or on deployment startup), not during a Quest frame.
-- Authenticate upstream OllaBridge calls; enforce quotas, size/time bounds, redacted metrics and no-store defaults.
+### P0 — batch STT
 
-### P1 — real optional Piper TTS
-- Replace `tts/piper_process.py`, `tts/factory.py` and voice loader TODOs; produce playable WAV/PCM from verified Piper ONNX model+config. Limit text, validate voice IDs against allowlist and registry, sanitize process invocation, define synthesis cancellation.
-- Implement `POST /v1/audio/speech`, list voices, test English+Italian, phoneme/audio timing where supported, and sample format metadata. Preserve existing client-local Piper as default.
+Done in SonicAgent. `POST /v1/audio/transcriptions` runs multilingual Tiny on CPU INT8 for English, Spanish, French, German, Italian, and Portuguese. `/health/ready` waits for the loaded model. The Tiny checkpoint is pinned. A physical Quest microphone has not been tested.
+
+### P1 — batch Piper
+
+Done in SonicAgent. `POST /v1/audio/speech` returns a WAV for the `hp-piper-voices` mirror, including Companion and Secretary presets. Voice file hashes in the registry are still `TODO`. Phrase-pipelined realtime playback is still P2.
 
 ### P2 — realtime session services
 - Implement `sessions/manager.py`, `auth/*`, `api/websocket/endpoint.py`, `audio/*`, VAD, endpointing, STT turns, cancellation/turn IDs, a **single** LLM owner, TTS queueing, barge-in/echo guard, and proper cleanup.
@@ -147,21 +145,21 @@ Keep source STT and LLM separate: `transcript.final` goes to Avatar's canonical 
 - Never use `SpeechRecognition` as a privacy-preserving default. It is opt-in only when cloud speech recognition is permitted and its provider behavior is understood.
 
 ### P3 — deployment
-- Complete Docker CPU image with decoder/Piper binary, healthcheck and preinstalled or startup-cached models; add a Compose profile for local OllaBridge + SonicAgent with private service networking.
-- Add a **conditional** Hugging Face Docker Space template, subject to current account eligibility, model weights/CPU startup profile, secrets, sleeping, storage and service limits. Reject deployment as "production always-on" on free tier.
+
+Done for the speech image. `hf/` builds the CPU image, and the existing Space `ruslanmv/SonicAgent` runs it. CPU Basic can sleep. It is not an always-on production host. A Compose profile that places SonicAgent on a private network next to OllaBridge is still open.
 
 ## 7. Cross-repository implementation order (split PRs)
 
 | Order | Repository | Suggested changes | Merge gate |
 | --- | --- | --- | --- |
 | RFC (this PR) | **SonicAgent** | This spec, endpoints, security architecture, QA checklist | Review contracts and trust boundaries |
-| 1 | **SonicAgent** | Batch faster-whisper, tests, readiness, pinned models, container | Fixed English/Italian fixture passes on CPU; negative tests; no fake results |
+| 1 | **SonicAgent** | Batch faster-whisper, tests, readiness, pinned models, container. **Done on this branch.** | English and Italian fixtures pass on CPU; negative tests; no fake results |
 | 2 | **OllaBridge (local)** | New voice service config/health + CloudBridgeManager `sonicagent.*` dispatch and capability ads | Existing chat/avatar relay tests unchanged; backend not ready -> explicit unavailability |
 | 3 | **OllaBridge Cloud** | Owner-scoped voice proxy and token checks; bounded base64 RPC on existing JSON relay | Cross-tenant requests denied; disconnected device behavior deterministic; authenticated request works |
 | 4 | **3D-Avatar-Chatbot** | New `ollabridge-voice` provider, MediaRecorder PTT, transcript integration, diagnostics, feature flag | Quest + Air Link capture and final transcript; exactly one chat turn |
-| 5 | **SonicAgent** | Optional Piper service, actual WAV synthesis, voice registry | Valid playable audio and clean cancellation; existing avatar TTS still works |
+| 5 | **SonicAgent** | Piper WAV synthesis and the voice registry. **Done for batch WAV.** Realtime cancellation remains open. | Playable audio for the mirror; existing avatar TTS still works |
 | 6 | **OllaBridge local/Cloud + SonicAgent + Avatar** | Streaming WSS relay, AudioWorklet, VAD, barge-in, speaking states | End-to-end streamed headset test; no cross-tenant leakage; no VR frame regression |
-| 7 | **Deployment** | HF optional demo, operational dashboards, performance comparisons | Cold-start / sleep / no-cost eligibility documented; never required for primary path |
+| 7 | **Deployment** | The Space `ruslanmv/SonicAgent` is deployed. Dashboards and a headset comparison remain open. | Cold start and sleep stay documented; the Space is not the required primary path |
 
 ## 8. Avatar integration details (important)
 
@@ -181,7 +179,7 @@ Current official HF documentation: [Spaces Overview](https://huggingface.co/docs
 
 As of this RFC, **CPU Basic** advertises **2 vCPU / 16 GB RAM / $0 hourly compute**, **but creating new compute-backed Docker/Gradio Spaces on CPU Basic requires an eligible subscription**; Static Spaces are free to everyone. Existing grants/Spaces/account eligibility must be checked explicitly. Free compute may sleep and has nonpersistent storage. No guarantee of always-on voice sessions, realtime QoS, free GPU, unlimited concurrent inference, or free-account Docker creation. Do not build a mandatory dependency on this tier.
 
-If eligible, prototype a Docker Space that serves FastAPI on the supported port with a small pinned STT model and warm-up status; compare it with local CPU. Pin license approvals and HF token as **server-side secret only**; avoid public unthrottled inference endpoint; benchmark cold-start and English/Italian word-error rates. If ineligible, stop this deployment path and continue with self-hosted SonicAgent behind OllaBridge Cloud. The user's Cloud relay itself may also be hosted on a Space and can sleep: test **both hops**.
+The existing Space `ruslanmv/SonicAgent` serves this FastAPI image on CPU Basic, with Whisper Tiny pinned and the Piper mirror installed at build time. It can sleep, cold-start, and run out of memory. The HF token and `SONIC_API_KEY` stay server-side. One HTTP measurement is published in `benchmarks/reports/hf-cpu-basic-endpoint-capability.md`. That pass is not a word-error-rate study and not a Quest result. OllaBridge Cloud is a separate hop and is not routing audio yet. If that relay is also a Space, test both hops before promising a headset path.
 
 ## 10. Compatibility and QA matrix
 
@@ -217,6 +215,8 @@ If eligible, prototype a Docker Space that serves FastAPI on the supported port 
 
 ## 12. Acceptance criteria / definition of done
 
+SonicAgent batch transcription from the WAV fixtures, `/health/ready`, batch Piper WAVs, and the conditional Space deployment are in place. The boxes below stay open because each one still includes OllaBridge, the Avatar, or a physical headset.
+
 - [ ] Real faster-whisper inference returns a correct **non-placeholder** transcript from deterministic WAV and WebM fixtures and from a real Quest microphone.
 - [ ] `/health/ready` and capability discovery accurately report warm vs unsupported/unavailable engine; no fake success.
 - [ ] A Cloud account can reach **only its own paired** SonicAgent via a bounded, authenticated request; revoked/offline devices fail safely.
@@ -236,4 +236,4 @@ If eligible, prototype a Docker Space that serves FastAPI on the supported port 
 - Core browser API background: [MDN getUserMedia](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia), [MediaRecorder](https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder), [AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet).
 - Alternative browser-local engine: [Transformers.js](https://huggingface.co/docs/transformers.js/index). Only label a model **offline** after preloading/pinning its binary assets and verifying zero network access during inference.
 
-**Next action after approving this RFC:** implement **SonicAgent batch STT** first (real inference + tests) in a separate code PR, and do not begin streaming until the OllaBridge Cloud owner-scoped binary relay design is independently reviewed.
+**Next action:** implement the OllaBridge owner-scoped voice relay. Do not begin streaming until that binary relay design is independently reviewed. SonicAgent batch speech is no longer the next task.
