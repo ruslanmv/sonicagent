@@ -11,10 +11,17 @@ def test_speak_panel_has_ready_examples_and_autoplay():
     html = (UI / "index.html").read_text(encoding="utf-8")
     script = (UI / "app.js").read_text(encoding="utf-8")
     catalog = (UI / "catalog.json").read_text(encoding="utf-8")
-    assert 'id="exampleList"' in html
+    assert 'id="voiceGrid"' in html
+    assert 'id="voiceFilters"' in html
+    assert 'id="voiceSearch"' in html
+    assert 'id="playerDock"' in html
     assert "audioPlayer.play" in script
+    assert "maybeAutoTranscribe" in script
+    assert "Transcription starts when you stop." in script
+    assert "Audio is sent only when you click Transcribe" not in script
     assert "Playing now. Replay on the player is optional." in script
     assert "/ui-assets/examples/" in script
+    assert "grid-template-columns:1fr 1fr" in (UI / "style.css").read_text(encoding="utf-8")
     assert "Lessac · English" not in html + script
     examples = UI / "examples"
     for voice in (
