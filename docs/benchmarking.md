@@ -11,18 +11,12 @@ SonicAgent is designed for measurable low-latency operation. Every report must d
 
 Required turn timestamps include speech start/stop, STT start/final, LLM request/first token, first phrase, TTS start, first audio, completion, barge-in detection, and audio cancellation.
 
-Run the deterministic scaffold benchmark:
-
-```bash
-make benchmark-smoke
-```
-
-That scaffold does not call Whisper or Piper. Measure the running HTTP API with:
+`make benchmark-smoke` does not call Whisper or Piper. Its latency fields are placeholders. Measure the running HTTP API with:
 
 ```bash
 export SONIC_API_KEY=your-service-token
 make benchmark-endpoints
 ```
 
-The command writes `benchmarks/results/endpoints.json`. Read [`benchmarks/README.md`](../benchmarks/README.md) before quoting a figure. A headset still waits for the full WAV, because realtime playback is not implemented.
+The command writes `benchmarks/results/endpoints.json`. The published pass is [`benchmarks/reports/hf-cpu-basic-endpoint-capability.md`](../benchmarks/reports/hf-cpu-basic-endpoint-capability.md). Read [`benchmarks/README.md`](../benchmarks/README.md) before quoting a figure. A headset still waits for the full WAV, because realtime playback is not implemented.
 

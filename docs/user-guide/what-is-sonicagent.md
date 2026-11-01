@@ -1,41 +1,27 @@
-# What SonicAgent-RT does
+# What SonicAgent does
 
-SonicAgent-RT helps a computer talk and listen in near real time.
+SonicAgent transcribes speech and synthesizes a WAV. A product sends one audio file, or one piece of text, and gets one result.
 
-A typical conversation looks like this:
+The running conversation is batch:
 
-1. Your browser records microphone audio.
-2. The browser sends small audio frames to the SonicAgent-RT backend.
-3. The backend checks the audio format and order.
-4. Voice activity detection decides when you started and stopped speaking.
-5. Speech-to-text turns your voice into text.
-6. A text model writes the assistant response.
-7. Text-to-speech turns the response into audio.
-8. The backend streams assistant audio back to the browser.
+1. The browser records an utterance, or a client uploads a file.
+2. `POST /v1/audio/transcriptions` returns the text.
+3. `POST /v1/audio/speech` returns a WAV for a voice in the selected language.
+4. Voice Studio plays that WAV from the voice card.
 
-## Important words in simple language
+A streaming call (small PCM frames, voice activity detection, a live language model, and audio that starts before the sentence is finished) is the later design. It is not what the server does today.
 
-| Word | Simple meaning |
+## Words
+
+| Word | Meaning |
 | --- | --- |
-| Backend | The server program that does most of the work. |
-| Browser demo | The web page you use to test a voice conversation. |
-| WebSocket | A live network connection between browser and backend. |
-| PCM16 | A common uncompressed audio format. |
-| VAD | Voice activity detection; it decides whether audio contains speech. |
-| STT | Speech-to-text. |
-| LLM | The AI text model that writes a reply. |
-| TTS | Text-to-speech. |
-| Fake provider | A deterministic test provider that works without real AI models. |
+| Voice Studio | The page at `/` on the voice image and on the Hugging Face Space. |
+| STT | Speech to text. Whisper Tiny on CPU. |
+| TTS | Text to speech. Piper. |
+| Companion / Secretary | Female Piper presets. Companion is slower and softer. Secretary is a little faster and steadier. |
+| Bearer token | The `SONIC_API_KEY` required by `/v1/audio/*`. |
+| Public demo | An optional, rate-limited anonymous path. Off unless you enable it. |
 
-## What works today
+## What is not ready
 
-The repository currently includes tested protocol helpers, audio-buffering
-building blocks, deterministic fake-provider smoke checks, and a web-client test
-suite.
-
-## What is not ready yet
-
-Real production use still requires the missing provider implementations,
-validated model downloads, green non-skipped test coverage, and a successful
-backend run with all runtime dependencies installed. See
-[Production status](../production-status.md).
+Realtime WebSocket turns, Silero voice activity detection, barge-in, and a streaming language model. See [Production status](../production-status.md).
