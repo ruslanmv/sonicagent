@@ -82,6 +82,18 @@ def test_staging_contains_engine_and_no_secrets(tmp_path: Path) -> None:
     assert secret_names == []
 
 
+def test_master_push_deploys_the_prepared_space() -> None:
+    text = (ROOT / ".github" / "workflows" / "huggingface-space.yml").read_text(encoding="utf-8")
+    assert 'branches: ["main", "master"]' in text
+    assert "hf/scripts/prepare-space.py" in text
+    assert "secrets.HF_TOKEN" in text
+    assert "secrets.HF_USERNAME" in text
+    assert "secrets.SPACE_NAME" in text
+    assert "git push --force" in text
+    assert "hf_" not in text
+    assert "https://${HF_USERNAME}:${HF_TOKEN}" not in text
+
+
 def test_shell_scripts_have_bash_syntax() -> None:
     for name in ("build-local.sh", "run-local.sh", "deploy-space.sh"):
         subprocess.run(["bash", "-n", str(HF / "scripts" / name)], check=True)

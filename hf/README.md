@@ -263,7 +263,9 @@ git commit -m "Deploy SonicAgent voice service"
 git push
 ```
 
-If `hf auth whoami` fails, stop. The dry run is still valid. Finish the login locally and rerun `--push`. This repository cannot authenticate for you.
+If `hf auth whoami` fails, stop. The dry run is still valid. Finish the login locally and rerun `--push`. A local checkout does not authenticate by itself.
+
+A push to `master` or `main` runs `.github/workflows/huggingface-space.yml`. The job stages this same tree with `prepare-space.py` and force-pushes it to the Space `main` branch. Repository secrets are `HF_TOKEN` (a write token), `HF_USERNAME` (`ruslanmv`), and `SPACE_NAME` (`SonicAgent`). The workflow does not print the token.
 
 ## 9. Space secrets
 
