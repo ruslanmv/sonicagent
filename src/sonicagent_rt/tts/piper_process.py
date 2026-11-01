@@ -12,6 +12,7 @@ import io
 import json
 import logging
 import threading
+import time
 import wave
 from pathlib import Path
 
@@ -19,7 +20,13 @@ from sonicagent_rt.audio.pcm import floats_to_pcm16
 from sonicagent_rt.config import Settings
 from sonicagent_rt.stt.errors import Cancelled, InferenceFailed, InvalidRequest, TextTooLong, VoiceUnavailable
 from sonicagent_rt.tts.base import SynthesizedSpeech, TtsStatus
-from sonicagent_rt.tts.models import VoiceRecord, registry_voices, resolve_voice_files, validate_voice_id, voice_record
+from sonicagent_rt.tts.models import (
+    VoiceRecord,
+    registry_voices,
+    resolve_voice_files,
+    validate_voice_id,
+    voice_record,
+)
 
 logger = logging.getLogger("sonicagent_rt.tts")
 
@@ -27,9 +34,17 @@ logger = logging.getLogger("sonicagent_rt.tts")
 class PiperSynthesizer:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
-        self._voices: dict[str, object] = {}
+        # HV9. Loaded Piper voices are keyed by the MODEL FILE, not the voice id. Several presets
+        # are one ONNX model with different synthesis settings or speaker ids — Paola companion
+        # and secretary, Sharvard companion/secretary/male, Ald, UPMC Jessica and Pierre — and
+        # keying by voice id loaded each of them again: the same ~60 MB twice in memory and a
+        # second cold start when the person switched speaking style. The synthesis settings
+        # and speaker id are per call (``_synthesis_config``), so one loaded model serves all.
+        self._voices: dict[str, object] = {}  # model path → loaded PiperVoice
         self._lock = threading.Lock()
-        self._loaded: set[str] = set()
+        self._loading: dict[str, threading.Lock] = {}  # model path → lock held while loading
+        self._loaded: set[str] = set()  # voice ids served by a loaded model
+        self._load_ms: dict[str, float] = {}  # model path → measured cold load
 
     def describe(self) -> TtsStatus:
         if not self._settings.tts_enabled:
@@ -123,30 +138,68 @@ class PiperSynthesizer:
         return present
 
     def _voice(self, voice_id: str) -> object:
-        with self._lock:
-            cached = self._voices.get(voice_id)
-            if cached is not None:
-                return cached
-        if importlib.util.find_spec("piper") is None:
-            raise VoiceUnavailable("Piper is not installed")
         model, config = resolve_voice_files(self._model_dir(), voice_id)
-        config = _loadable_config(config)
-        piper = importlib.import_module("piper")
-        voice_type = getattr(piper, "PiperVoice", None)
-        if voice_type is None or not hasattr(voice_type, "load"):
-            raise VoiceUnavailable("installed Piper package cannot load voices")
-        try:
-            try:
-                loaded = voice_type.load(str(model), config_path=str(config))
-            except TypeError:
-                loaded = voice_type.load(str(model))
-        except Exception as exc:
-            logger.exception("piper voice load failed")
-            raise VoiceUnavailable("voice model could not be loaded") from exc
+        key = str(model)
         with self._lock:
-            self._voices[voice_id] = loaded
-            self._loaded.add(voice_id)
+            cached = self._voices.get(key)
+            if cached is not None:
+                self._loaded.add(voice_id)
+                return cached
+            gate = self._loading.setdefault(key, threading.Lock())
+        # One load per model even when two presets ask at once: the second waits and reuses it.
+        with gate:
+            with self._lock:
+                cached = self._voices.get(key)
+                if cached is not None:
+                    self._loaded.add(voice_id)
+                    return cached
+            if importlib.util.find_spec("piper") is None:
+                raise VoiceUnavailable("Piper is not installed")
+            config = _loadable_config(config)
+            piper = importlib.import_module("piper")
+            voice_type = getattr(piper, "PiperVoice", None)
+            if voice_type is None or not hasattr(voice_type, "load"):
+                raise VoiceUnavailable("installed Piper package cannot load voices")
+            started = time.perf_counter()
+            try:
+                try:
+                    loaded = voice_type.load(str(model), config_path=str(config))
+                except TypeError:
+                    loaded = voice_type.load(str(model))
+            except Exception as exc:
+                logger.exception("piper voice load failed")
+                raise VoiceUnavailable("voice model could not be loaded") from exc
+            with self._lock:
+                self._voices[key] = loaded
+                self._loaded.add(voice_id)
+                self._load_ms[key] = round((time.perf_counter() - started) * 1000, 1)
         return loaded
+
+    def is_loaded(self, voice_id: str) -> bool:
+        """Is the model behind this voice in memory (whichever preset loaded it)?"""
+        try:
+            model, _config = resolve_voice_files(self._model_dir(), voice_id)
+        except Exception:
+            return False
+        with self._lock:
+            return str(model) in self._voices
+
+    def warm(self, voice_id: str) -> dict[str, object]:
+        """Load one voice's model ahead of its first sentence. Never the whole catalogue."""
+        cold = not self.is_loaded(voice_id)
+        started = time.perf_counter()
+        self._voice(voice_id)
+        model, _config = resolve_voice_files(self._model_dir(), voice_id)
+        return {
+            "voice_id": voice_id,
+            "cold": cold,
+            "ms": round((time.perf_counter() - started) * 1000, 1),
+            "load_ms": self._load_ms.get(str(model)),
+        }
+
+    def loaded_models(self) -> int:
+        with self._lock:
+            return len(self._voices)
 
     def _model_dir(self) -> Path:
         configured = self._settings.tts_model_dir.strip()
