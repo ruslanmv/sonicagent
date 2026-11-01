@@ -1,6 +1,6 @@
 # AI Coder Production Prompt for SonicAgent-RT
 
-Use this prompt with an AI coding agent to turn this repository from a scaffold into a production-ready real-time voice-agent gateway. The expected outcome is a working repo where `make install`, `make run`, and `make test` succeed from a clean checkout, with all placeholders replaced by reviewed implementations, tests, docs, and CI.
+Use this prompt for the remaining realtime gateway. Batch Whisper, batch Piper, Voice Studio, and the `hf/` image already run. Do not replace them with stubs. The expected outcome is a working realtime repo where `make install`, `make run`, and `make test` succeed from a clean checkout.
 
 ## Role
 

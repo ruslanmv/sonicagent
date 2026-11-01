@@ -7,7 +7,7 @@ This directory deploys the same SonicAgent speech service in two places:
 
 The inference code stays in `src/sonicagent_rt`. Nothing in `hf/` is a second speech engine. The image listens on `0.0.0.0:7860`. Local Compose publishes that port on the host as `8000`.
 
-The default model is multilingual Whisper Tiny through `faster-whisper` and CTranslate2, CPU INT8. English-only checkpoints such as `tiny.en` are rejected. Listening covers English, Spanish, French, German, Italian, and Portuguese. Speech synthesis with Piper is optional and is off until voice files are installed and `SONIC_TTS_ENABLED=true`.
+The default model is multilingual Whisper Tiny through `faster-whisper` and CTranslate2, CPU INT8. English-only checkpoints such as `tiny.en` are rejected. Listening covers English, Spanish, French, German, Italian, and Portuguese. The Hugging Face image downloads the Piper mirror and sets `SONIC_TTS_ENABLED=true`. Local Compose leaves synthesis off until you set that variable.
 
 Hugging Face is a remote CPU host. It is not on-device inference and it is not an offline Quest mode. A Space can sleep, cold-start, and run out of memory. This repository does not claim the Space is always on.
 
@@ -75,7 +75,7 @@ SONIC_STT_ALLOW_DOWNLOAD=false
 SONIC_STT_WARMUP=true
 ```
 
-`auto` detects English or Italian. A request may also send `language=en` or `language=it`.
+`auto` leaves language detection to Whisper. A request may send `en`, `es`, `fr`, `de`, `it`, `pt`, or `auto`.
 
 Requests never download weights. Warmup downloads only when `SONIC_STT_ALLOW_DOWNLOAD=true`. The Hugging Face image bundles Tiny at build time and sets download to false, so a restart does not depend on Hugging Face Hub being reachable. The trade-off is a larger image and a rebuild when the pinned revision changes. The pin is repository `Systran/faster-whisper-tiny`, revision `d90ca5fe260221311c53c58e660288d3deb8d356`.
 

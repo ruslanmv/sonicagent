@@ -18,9 +18,7 @@ The Space is a remote processor. Audio sent here leaves the headset or browser. 
 ## Voice Studio
 
 Open the **App** tab to use the responsive SonicAgent Voice Studio at `/`.
-Record your microphone or upload audio, transcribe with Whisper, and try
-Piper TTS when a voice is installed. The UI also displays live model
-readiness. The previous JSON root response is at `/api-info`; the full
+Record your microphone. Transcription starts when you stop. Choose a language and play or generate a voice from that language only. The page shows model readiness. The previous JSON root response is at `/api-info`; the full
 OpenAPI documentation remains at `/docs`.
 
 **Private by default:** The production API uses a bearer service token.
@@ -40,7 +38,7 @@ Authenticated routes:
 
 - `GET /v1/audio/capabilities`
 - `POST /v1/audio/transcriptions`
-- `POST /v1/audio/speech` returns a WAV file for Lessac (English) and Paola (Italian)
+- `POST /v1/audio/speech` returns a WAV for a voice in `model_registry/voices.json`
 
 Public process checks:
 

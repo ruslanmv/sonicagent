@@ -1,5 +1,7 @@
 ## Architecture
 
+The diagram below is the realtime design. The service that runs today is batch HTTP: one upload in, one transcript or one WAV out. Voice activity detection, the streaming language model, and barge-in are not on that path.
+
 ```mermaid
 flowchart LR
     MIC[Browser microphone] --> AWI[Capture AudioWorklet]

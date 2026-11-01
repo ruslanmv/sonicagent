@@ -1,6 +1,6 @@
 # SonicAgent-RT full-production AI coder prompt
 
-Use this prompt with an expert AI coding agent when the objective is to finish **all** SonicAgent-RT implementation work, not just a narrow protocol or scaffold cleanup pass.
+Use this prompt for the work that is still open: realtime sessions, Silero VAD, barge-in, a streaming language model, voice checksums, and production operations. Batch Whisper, batch Piper, Voice Studio, and the Space already run. Do not rebuild them.
 
 ## Role
 
