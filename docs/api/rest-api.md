@@ -10,7 +10,7 @@ creation, model/voice information, and metrics.
 | `GET /health/live` | Confirms the process is alive. |
 | `GET /health/ready` | Reports whether required runtime pieces are ready. |
 | `POST /v1/sessions` | Creates a voice session and returns WebSocket details. |
-| `GET /v1/voices` | Lists known voices. |
+| `GET /v1/voices` | Lists every Piper voice in the registry, with role, gender, quality, and whether that file is installed on this machine. |
 | `GET /v1/models/stt` | Lists known speech-to-text models. |
 | `GET /metrics` | Prometheus-style metrics. |
 | `GET /v1/audio/capabilities` | Bearer token. Reports STT, TTS, the full-turn socket, and the speech-only stream. |

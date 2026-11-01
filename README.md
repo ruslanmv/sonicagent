@@ -42,7 +42,7 @@ Portuguese listening works. The Portuguese voices in the mirror, Edresson and Fa
 
 ## Voices
 
-Source mirror: [`ruslanmv/hp-piper-voices`](https://huggingface.co/ruslanmv/hp-piper-voices). The selectable ids live in [`model_registry/voices.json`](model_registry/voices.json).
+Source mirror: [`ruslanmv/hp-piper-voices`](https://huggingface.co/ruslanmv/hp-piper-voices). The selectable ids live in [`model_registry/voices.json`](model_registry/voices.json). The classified list, including what can be upgraded, is [`catalog/README.md`](catalog/README.md). `GET /v1/voices` returns the same library.
 
 | Locale | Companion | Secretary |
 | --- | --- | --- |
