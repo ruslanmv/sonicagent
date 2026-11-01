@@ -76,6 +76,7 @@ class Settings(BaseSettings if SettingsConfigDict is not None else _FallbackSett
     max_jitter_ms: int = 200
     max_outbound_queue_ms: int = 2000
     vad_provider: str = "silero"
+    vad_model_path: str = ""
     vad_threshold: float = 0.50
     vad_min_speech_ms: int = 200
     vad_min_silence_ms: int = 500
@@ -104,6 +105,7 @@ class Settings(BaseSettings if SettingsConfigDict is not None else _FallbackSett
     llm_model: str = "llama3.1:8b"
     llm_temperature: float = 0.4
     llm_max_tokens: int = 256
+    llm_timeout_sec: float = 30.0
     tts_provider: str = "piper"
     tts_voice: str = "en_US-lessac-medium"
     tts_workers: int = 2

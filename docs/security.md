@@ -8,6 +8,21 @@ unless the user clearly agrees otherwise.
 Do not expose the local development server to the public internet. Development
 settings are for local testing only.
 
+## Threat model
+
+Untrusted input is microphone audio, uploaded files, text sent to speech, model files, and the language-model response.
+
+| Boundary | What the process does |
+| --- | --- |
+| Batch and session routes | Bearer token. Placeholder tokens are rejected. Origin is checked when the browser sends one. |
+| Realtime socket | A random resume token. One live socket per session. Reconnect uses the same token after the first socket closes. Sequence numbers must increase. |
+| Audio and text | Size and duration caps. Frames over 64 KiB are rejected. The outbound queue stops a turn when it exceeds the configured milliseconds. |
+| Logs and metrics | No transcript text, no resume token, no API key. LLM failures log the error type and model name. |
+| Storage | Audio and transcripts stay off unless the operator turns the store flags on. |
+| Models | Piper files are checked against `voices.json`. Silero runs only when the file matches the pinned sha256. |
+
+TLS is terminated in front of the process. This repository does not sign release artifacts. `scripts/export-sbom.sh` writes a CycloneDX file when `cyclonedx-py` is installed.
+
 ## Required production controls
 
 Before production use, implement and verify:

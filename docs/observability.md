@@ -5,9 +5,11 @@ content.
 
 ## What to measure
 
-The batch API is measured from the client by `make benchmark-endpoints`. A published pass is in `benchmarks/reports/`. The timestamps below belong to the realtime design, which is not running.
+The batch API is measured from the client by `make benchmark-endpoints`. A published pass is in `benchmarks/reports/`. That pass does not time the realtime socket.
 
-For each realtime turn, SonicAgent should measure:
+A finished realtime turn emits `metrics.turn` with `speech_ms`, `stt_ms`, `llm_first_ms`, `tts_first_ms`, and `total_ms`. `/metrics` records `sonicagent_realtime_turns_total`, `sonicagent_realtime_inflight`, and `sonicagent_realtime_stage_seconds` for those three stage fields. Speech start and stop are socket events. Barge-in is a `response.cancelled` result, not a separate cutoff-latency histogram.
+
+For each realtime turn, the socket can report:
 
 - Time until speech starts.
 - Time until speech stops.

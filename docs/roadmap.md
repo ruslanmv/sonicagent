@@ -1,6 +1,8 @@
 ## Production implementation sequence
 
-Complete the system in this order so that transport contracts remain stable while inference providers are added:
+The items below are the original build order. Protocol sessions, browser PCM helpers, energy endpointing with an optional pinned Silero file, the OpenAI-compatible and Ollama client, phrase playback, barge-in cancellation, in-process stage metrics, and the threat-model notes are in the tree. Partial transcripts, a Piper worker pool, release signing, and a headset load run are not.
+
+Complete any remaining gap in this order so that transport contracts remain stable while inference providers are added:
 
 1. **Protocol and sessions** — finalize JSON events, binary header, authentication, reconnect, sequence validation, queue limits, and golden fixtures.
 2. **Browser media** — complete AudioWorklet capture/playback, resampling, echo handling, playback timestamps, and backpressure.

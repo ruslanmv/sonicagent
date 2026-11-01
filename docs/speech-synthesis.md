@@ -1,6 +1,6 @@
 # Speech synthesis
 
-Batch text-to-speech is implemented with Piper. Phrase-by-phrase playback over the WebSocket is not implemented.
+Batch text-to-speech is implemented with Piper. The realtime turn speaks a finished phrase as PCM frames before the rest of the reply when Piper is ready. A cancelled turn sets `clear_audio` so the client drops queued playback.
 
 ## What runs
 
