@@ -1,3 +1,3 @@
 # Support
 
-Use GitHub Discussions for questions and design proposals. Use issue templates for reproducible defects. Production support is not provided by this scaffold.
+Use GitHub Discussions for questions and design proposals. Use issue templates for reproducible defects. There is no production support agreement for the Space or the voice image.

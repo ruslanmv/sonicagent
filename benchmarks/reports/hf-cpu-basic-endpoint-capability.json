@@ -1,0 +1,1048 @@
+{
+  "schema_version": 1,
+  "measured_at": "2026-11-01T00:46:40+01:00",
+  "auth": "bearer",
+  "client": {
+    "platform": "Linux-6.12.94+-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "cpu_count": 4
+  },
+  "target": {
+    "base_url": "https://ruslanmv-sonicagent.hf.space",
+    "git_commit": "da704b9ebd5d903814602556e0ab79aff3f74c2f",
+    "git_dirty": true,
+    "space_stage": "RUNNING",
+    "space_hardware": "cpu-basic",
+    "space_region": "us",
+    "space_sha": "13489f2232797ba6e8ac99b16a7b4940f11c39f3"
+  },
+  "notes": [
+    "Warmup calls are excluded from the percentile rows.",
+    "p99 is omitted when a series has fewer than 20 successful samples.",
+    "The client is not a VR headset, phone, or AR device."
+  ],
+  "series": [
+    {
+      "name": "health_live_cold",
+      "method": "GET",
+      "path": "/health/live",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 37.8,
+          "total_ms": 37.8,
+          "bytes": 15
+        }
+      ],
+      "summary": {
+        "n": 1,
+        "errors": 0,
+        "total_ms": {
+          "n": 1,
+          "min": 37.8,
+          "p50": 37.8,
+          "p95": 37.8,
+          "max": 37.8,
+          "p99": null
+        },
+        "ttfb_ms": {
+          "n": 1,
+          "min": 37.8,
+          "p50": 37.8,
+          "p95": 37.8,
+          "max": 37.8,
+          "p99": null
+        },
+        "audio_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        },
+        "rtf": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        }
+      }
+    },
+    {
+      "name": "health_live_warm",
+      "method": "GET",
+      "path": "/health/live",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 6.8,
+          "total_ms": 7.2,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 7.8,
+          "total_ms": 7.9,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 7.5,
+          "total_ms": 7.5,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 6.2,
+          "total_ms": 6.3,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.4,
+          "total_ms": 5.4,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 8.3,
+          "total_ms": 8.8,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 8.8,
+          "total_ms": 9.1,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 8.7,
+          "total_ms": 8.8,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 6.2,
+          "total_ms": 6.7,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.6,
+          "total_ms": 5.6,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.2,
+          "total_ms": 5.2,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.6,
+          "total_ms": 5.9,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.8,
+          "total_ms": 6.0,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.7,
+          "total_ms": 6.0,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.4,
+          "total_ms": 5.4,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.9,
+          "total_ms": 6.1,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.0,
+          "total_ms": 5.0,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.4,
+          "total_ms": 5.9,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.0,
+          "total_ms": 5.1,
+          "bytes": 15
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.1,
+          "total_ms": 5.6,
+          "bytes": 15
+        }
+      ],
+      "summary": {
+        "n": 20,
+        "errors": 0,
+        "total_ms": {
+          "n": 20,
+          "min": 5.0,
+          "p50": 6.0,
+          "p95": 8.815000000000001,
+          "max": 9.1,
+          "p99": 9.043
+        },
+        "ttfb_ms": {
+          "n": 20,
+          "min": 5.0,
+          "p50": 5.75,
+          "p95": 8.705,
+          "max": 8.8,
+          "p99": 8.781
+        },
+        "audio_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        },
+        "rtf": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        }
+      }
+    },
+    {
+      "name": "health_ready",
+      "method": "GET",
+      "path": "/health/ready",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 6.6,
+          "total_ms": 6.7,
+          "bytes": 1415
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 8.0,
+          "total_ms": 8.0,
+          "bytes": 1415
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 8.2,
+          "total_ms": 8.2,
+          "bytes": 1415
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 7.7,
+          "total_ms": 7.7,
+          "bytes": 1415
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 7.1,
+          "total_ms": 7.1,
+          "bytes": 1415
+        }
+      ],
+      "summary": {
+        "n": 5,
+        "errors": 0,
+        "total_ms": {
+          "n": 5,
+          "min": 6.7,
+          "p50": 7.7,
+          "p95": 8.16,
+          "max": 8.2,
+          "p99": null
+        },
+        "ttfb_ms": {
+          "n": 5,
+          "min": 6.6,
+          "p50": 7.7,
+          "p95": 8.16,
+          "max": 8.2,
+          "p99": null
+        },
+        "audio_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        },
+        "rtf": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        }
+      }
+    },
+    {
+      "name": "example_wav",
+      "method": "GET",
+      "path": "/ui-assets/examples/it_IT-paola-medium.wav",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 6.5,
+          "total_ms": 8.9,
+          "bytes": 81964,
+          "audio_ms": 1857,
+          "rtf": 0.005
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 6.4,
+          "total_ms": 8.0,
+          "bytes": 81964,
+          "audio_ms": 1857,
+          "rtf": 0.004
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 7.0,
+          "total_ms": 8.1,
+          "bytes": 81964,
+          "audio_ms": 1857,
+          "rtf": 0.004
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.4,
+          "total_ms": 6.8,
+          "bytes": 81964,
+          "audio_ms": 1857,
+          "rtf": 0.004
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 5.4,
+          "total_ms": 6.6,
+          "bytes": 81964,
+          "audio_ms": 1857,
+          "rtf": 0.004
+        }
+      ],
+      "summary": {
+        "n": 5,
+        "errors": 0,
+        "total_ms": {
+          "n": 5,
+          "min": 6.6,
+          "p50": 8.0,
+          "p95": 8.74,
+          "max": 8.9,
+          "p99": null
+        },
+        "ttfb_ms": {
+          "n": 5,
+          "min": 5.4,
+          "p50": 6.4,
+          "p95": 6.9,
+          "max": 7.0,
+          "p99": null
+        },
+        "audio_ms": {
+          "n": 5,
+          "min": 1857.0,
+          "p50": 1857.0,
+          "p95": 1857.0,
+          "max": 1857.0,
+          "p99": null
+        },
+        "rtf": {
+          "n": 5,
+          "min": 0.004,
+          "p50": 0.004,
+          "p95": 0.0048,
+          "max": 0.005,
+          "p99": null
+        }
+      }
+    },
+    {
+      "name": "capabilities",
+      "method": "GET",
+      "path": "/v1/audio/capabilities",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 9.9,
+          "total_ms": 10.4,
+          "bytes": 1445
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 8.7,
+          "total_ms": 8.7,
+          "bytes": 1445
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 9.4,
+          "total_ms": 9.5,
+          "bytes": 1445
+        }
+      ],
+      "summary": {
+        "n": 3,
+        "errors": 0,
+        "total_ms": {
+          "n": 3,
+          "min": 8.7,
+          "p50": 9.5,
+          "p95": 10.31,
+          "max": 10.4,
+          "p99": null
+        },
+        "ttfb_ms": {
+          "n": 3,
+          "min": 8.7,
+          "p50": 9.4,
+          "p95": 9.850000000000001,
+          "max": 9.9,
+          "p99": null
+        },
+        "audio_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        },
+        "rtf": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        }
+      }
+    },
+    {
+      "name": "tts_en_lessac",
+      "method": "POST",
+      "path": "/v1/audio/speech",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 110.2,
+          "total_ms": 110.2,
+          "bytes": 26668,
+          "audio_ms": 603,
+          "rtf": 0.183
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 186.2,
+          "total_ms": 186.2,
+          "bytes": 28204,
+          "audio_ms": 638,
+          "rtf": 0.292
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 196.1,
+          "total_ms": 196.2,
+          "bytes": 28204,
+          "audio_ms": 638,
+          "rtf": 0.307
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 108.9,
+          "total_ms": 108.9,
+          "bytes": 26668,
+          "audio_ms": 603,
+          "rtf": 0.181
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 111.6,
+          "total_ms": 111.7,
+          "bytes": 27692,
+          "audio_ms": 626,
+          "rtf": 0.178
+        }
+      ],
+      "summary": {
+        "n": 5,
+        "errors": 0,
+        "total_ms": {
+          "n": 5,
+          "min": 108.9,
+          "p50": 111.7,
+          "p95": 194.2,
+          "max": 196.2,
+          "p99": null
+        },
+        "ttfb_ms": {
+          "n": 5,
+          "min": 108.9,
+          "p50": 111.6,
+          "p95": 194.12,
+          "max": 196.1,
+          "p99": null
+        },
+        "audio_ms": {
+          "n": 5,
+          "min": 603.0,
+          "p50": 626.0,
+          "p95": 638.0,
+          "max": 638.0,
+          "p99": null
+        },
+        "rtf": {
+          "n": 5,
+          "min": 0.178,
+          "p50": 0.183,
+          "p95": 0.304,
+          "max": 0.307,
+          "p99": null
+        }
+      },
+      "warmup": {
+        "status": 200,
+        "ttfb_ms": 86.7,
+        "total_ms": 86.7,
+        "bytes": 27692,
+        "audio_ms": 626,
+        "rtf": 0.139
+      },
+      "voice": "en_US-lessac-medium",
+      "text": "Hello."
+    },
+    {
+      "name": "tts_en_kristin",
+      "method": "POST",
+      "path": "/v1/audio/speech",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 191.6,
+          "total_ms": 192.2,
+          "bytes": 57388,
+          "audio_ms": 1300,
+          "rtf": 0.148
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 206.4,
+          "total_ms": 206.8,
+          "bytes": 57900,
+          "audio_ms": 1311,
+          "rtf": 0.158
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 281.6,
+          "total_ms": 282.0,
+          "bytes": 50732,
+          "audio_ms": 1149,
+          "rtf": 0.245
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 122.0,
+          "total_ms": 122.1,
+          "bytes": 46124,
+          "audio_ms": 1044,
+          "rtf": 0.117
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 192.6,
+          "total_ms": 192.8,
+          "bytes": 56364,
+          "audio_ms": 1277,
+          "rtf": 0.151
+        }
+      ],
+      "summary": {
+        "n": 5,
+        "errors": 0,
+        "total_ms": {
+          "n": 5,
+          "min": 122.1,
+          "p50": 192.8,
+          "p95": 266.96,
+          "max": 282.0,
+          "p99": null
+        },
+        "ttfb_ms": {
+          "n": 5,
+          "min": 122.0,
+          "p50": 192.6,
+          "p95": 266.56,
+          "max": 281.6,
+          "p99": null
+        },
+        "audio_ms": {
+          "n": 5,
+          "min": 1044.0,
+          "p50": 1277.0,
+          "p95": 1308.8,
+          "max": 1311.0,
+          "p99": null
+        },
+        "rtf": {
+          "n": 5,
+          "min": 0.117,
+          "p50": 0.151,
+          "p95": 0.22759999999999997,
+          "max": 0.245,
+          "p99": null
+        }
+      },
+      "warmup": {
+        "status": 200,
+        "ttfb_ms": 2399.6,
+        "total_ms": 2399.7,
+        "bytes": 51756,
+        "audio_ms": 1172,
+        "rtf": 2.048
+      },
+      "voice": "en_US-kristin-medium",
+      "text": "Stay with me."
+    },
+    {
+      "name": "tts_it_paola",
+      "method": "POST",
+      "path": "/v1/audio/speech",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 201.0,
+          "total_ms": 201.1,
+          "bytes": 20012,
+          "audio_ms": 452,
+          "rtf": 0.445
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 110.5,
+          "total_ms": 110.5,
+          "bytes": 21036,
+          "audio_ms": 476,
+          "rtf": 0.232
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 182.8,
+          "total_ms": 182.9,
+          "bytes": 20524,
+          "audio_ms": 464,
+          "rtf": 0.394
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 108.5,
+          "total_ms": 108.5,
+          "bytes": 20012,
+          "audio_ms": 452,
+          "rtf": 0.24
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 189.0,
+          "total_ms": 189.1,
+          "bytes": 20524,
+          "audio_ms": 464,
+          "rtf": 0.407
+        }
+      ],
+      "summary": {
+        "n": 5,
+        "errors": 0,
+        "total_ms": {
+          "n": 5,
+          "min": 108.5,
+          "p50": 182.9,
+          "p95": 198.7,
+          "max": 201.1,
+          "p99": null
+        },
+        "ttfb_ms": {
+          "n": 5,
+          "min": 108.5,
+          "p50": 182.8,
+          "p95": 198.6,
+          "max": 201.0,
+          "p99": null
+        },
+        "audio_ms": {
+          "n": 5,
+          "min": 452.0,
+          "p50": 464.0,
+          "p95": 473.59999999999997,
+          "max": 476.0,
+          "p99": null
+        },
+        "rtf": {
+          "n": 5,
+          "min": 0.232,
+          "p50": 0.394,
+          "p95": 0.4374,
+          "max": 0.445,
+          "p99": null
+        }
+      },
+      "warmup": {
+        "status": 200,
+        "ttfb_ms": 289.8,
+        "total_ms": 289.9,
+        "bytes": 22060,
+        "audio_ms": 499,
+        "rtf": 0.581
+      },
+      "voice": "it_IT-paola-medium",
+      "text": "Ciao."
+    },
+    {
+      "name": "tts_es_sharvard",
+      "method": "POST",
+      "path": "/v1/audio/speech",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 192.3,
+          "total_ms": 192.4,
+          "bytes": 16940,
+          "audio_ms": 383,
+          "rtf": 0.502
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 114.4,
+          "total_ms": 114.5,
+          "bytes": 17452,
+          "audio_ms": 394,
+          "rtf": 0.29
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 97.8,
+          "total_ms": 97.8,
+          "bytes": 15916,
+          "audio_ms": 359,
+          "rtf": 0.272
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 95.8,
+          "total_ms": 95.9,
+          "bytes": 17452,
+          "audio_ms": 394,
+          "rtf": 0.243
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 102.8,
+          "total_ms": 103.0,
+          "bytes": 17452,
+          "audio_ms": 394,
+          "rtf": 0.261
+        }
+      ],
+      "summary": {
+        "n": 5,
+        "errors": 0,
+        "total_ms": {
+          "n": 5,
+          "min": 95.9,
+          "p50": 103.0,
+          "p95": 176.82,
+          "max": 192.4,
+          "p99": null
+        },
+        "ttfb_ms": {
+          "n": 5,
+          "min": 95.8,
+          "p50": 102.8,
+          "p95": 176.72,
+          "max": 192.3,
+          "p99": null
+        },
+        "audio_ms": {
+          "n": 5,
+          "min": 359.0,
+          "p50": 394.0,
+          "p95": 394.0,
+          "max": 394.0,
+          "p99": null
+        },
+        "rtf": {
+          "n": 5,
+          "min": 0.243,
+          "p50": 0.272,
+          "p95": 0.45959999999999995,
+          "max": 0.502,
+          "p99": null
+        }
+      },
+      "warmup": {
+        "status": 200,
+        "ttfb_ms": 2015.6,
+        "total_ms": 2015.7,
+        "bytes": 15916,
+        "audio_ms": 359,
+        "rtf": 5.615
+      },
+      "voice": "es_ES-sharvard-secretary",
+      "text": "Hola."
+    },
+    {
+      "name": "tts_es_sharvard_male",
+      "method": "POST",
+      "path": "/v1/audio/speech",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 108.0,
+          "total_ms": 108.0,
+          "bytes": 13356,
+          "audio_ms": 301,
+          "rtf": 0.359
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 99.9,
+          "total_ms": 100.0,
+          "bytes": 14892,
+          "audio_ms": 336,
+          "rtf": 0.297
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 95.8,
+          "total_ms": 95.9,
+          "bytes": 13868,
+          "audio_ms": 313,
+          "rtf": 0.306
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 183.7,
+          "total_ms": 183.8,
+          "bytes": 13356,
+          "audio_ms": 301,
+          "rtf": 0.611
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 106.9,
+          "total_ms": 107.0,
+          "bytes": 13356,
+          "audio_ms": 301,
+          "rtf": 0.355
+        }
+      ],
+      "summary": {
+        "n": 5,
+        "errors": 0,
+        "total_ms": {
+          "n": 5,
+          "min": 95.9,
+          "p50": 107.0,
+          "p95": 168.64,
+          "max": 183.8,
+          "p99": null
+        },
+        "ttfb_ms": {
+          "n": 5,
+          "min": 95.8,
+          "p50": 106.9,
+          "p95": 168.55999999999997,
+          "max": 183.7,
+          "p99": null
+        },
+        "audio_ms": {
+          "n": 5,
+          "min": 301.0,
+          "p50": 301.0,
+          "p95": 331.40000000000003,
+          "max": 336.0,
+          "p99": null
+        },
+        "rtf": {
+          "n": 5,
+          "min": 0.297,
+          "p50": 0.355,
+          "p95": 0.5606,
+          "max": 0.611,
+          "p99": null
+        }
+      },
+      "warmup": {
+        "status": 200,
+        "ttfb_ms": 292.5,
+        "total_ms": 292.6,
+        "bytes": 13356,
+        "audio_ms": 301,
+        "rtf": 0.972
+      },
+      "voice": "es_ES-sharvard-male",
+      "text": "Hola."
+    },
+    {
+      "name": "stt_en",
+      "method": "POST",
+      "path": "/v1/audio/transcriptions",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 509.3,
+          "total_ms": 509.3,
+          "bytes": 130
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 484.8,
+          "total_ms": 484.8,
+          "bytes": 130
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 503.6,
+          "total_ms": 503.7,
+          "bytes": 130
+        }
+      ],
+      "summary": {
+        "n": 3,
+        "errors": 0,
+        "total_ms": {
+          "n": 3,
+          "min": 484.8,
+          "p50": 503.7,
+          "p95": 508.74,
+          "max": 509.3,
+          "p99": null
+        },
+        "ttfb_ms": {
+          "n": 3,
+          "min": 484.8,
+          "p50": 503.6,
+          "p95": 508.73,
+          "max": 509.3,
+          "p99": null
+        },
+        "audio_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        },
+        "rtf": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "warmup_status": 200,
+      "fixture": "tests/fixtures/audio/en_hello.wav",
+      "transcript": "Hello? Can you help me?"
+    },
+    {
+      "name": "stt_it",
+      "method": "POST",
+      "path": "/v1/audio/transcriptions",
+      "samples": [
+        {
+          "status": 200,
+          "ttfb_ms": 486.8,
+          "total_ms": 487.2,
+          "bytes": 122
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 479.0,
+          "total_ms": 479.0,
+          "bytes": 122
+        },
+        {
+          "status": 200,
+          "ttfb_ms": 580.4,
+          "total_ms": 580.5,
+          "bytes": 122
+        }
+      ],
+      "summary": {
+        "n": 3,
+        "errors": 0,
+        "total_ms": {
+          "n": 3,
+          "min": 479.0,
+          "p50": 487.2,
+          "p95": 571.17,
+          "max": 580.5,
+          "p99": null
+        },
+        "ttfb_ms": {
+          "n": 3,
+          "min": 479.0,
+          "p50": 486.8,
+          "p95": 571.04,
+          "max": 580.4,
+          "p99": null
+        },
+        "audio_ms": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        },
+        "rtf": {
+          "n": 0,
+          "min": null,
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "max": null
+        }
+      },
+      "warmup_status": 200,
+      "fixture": "tests/fixtures/audio/it_ciao.wav",
+      "transcript": "Ciao come stai!"
+    }
+  ]
+}

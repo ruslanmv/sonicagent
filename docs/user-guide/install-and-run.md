@@ -1,82 +1,57 @@
 # Install and run
 
-This page explains the safest local-development path. You do not need to be an
-expert, but you should be comfortable opening a terminal.
+Use the voice image when you want Whisper and Piper. Use `make dev` when you want the mock API without downloading models.
 
-## 1. Requirements
+## Requirements
 
-Install these first:
+- Python 3.11 or newer, for tests and the mock API.
+- Node.js 20 or newer, for the web client tests.
+- Docker, for the speech image.
 
-- Python 3.11 or newer.
-- Node.js 20 or newer.
-- npm, which normally comes with Node.js.
-- Access to your approved Python package mirror if you want to run the backend.
-
-## 2. Get the code
+## Get the code
 
 ```bash
-git clone https://github.com/your-org/sonicagent-rt.git
-cd sonicagent-rt
+git clone https://github.com/ruslanmv/sonicagent.git
+cd sonicagent
 ```
 
-If you already have the repository, open a terminal in the repository root.
+## Speech image
 
-## 3. Install local dependencies
+```bash
+cp hf/.env.example hf/.env
+# Set SONIC_API_KEY in hf/.env. Use at least 16 characters locally.
+docker compose -f hf/docker-compose.yml up --build
+```
+
+Local API: `http://127.0.0.1:8000`
+
+Voice Studio: `http://127.0.0.1:8000/`
+
+The container listens on `7860`. Compose publishes that port as `8000`. The first build downloads Whisper Tiny. Piper in this Compose file stays off until `SONIC_TTS_ENABLED=true`. The Hugging Face image turns synthesis on and downloads the voice mirror during the build. Details are in `hf/README.md`.
+
+## Mock API
 
 ```bash
 make install
+make dev
 ```
-
-This installs the local Python package and the web client dependencies.
-In restricted/offline environments, the command may warn that runtime modules
-such as `fastapi` or `uvicorn` are missing. That warning means tests may still
-run, but the backend server cannot start until those modules are installed.
-
-## 4. Check the package
-
-```bash
-python -m sonicagent_rt --help
-python -c "import sonicagent_rt; print(sonicagent_rt.__version__)"
-```
-
-The first command should print command-line help. The second command should print
-the package version.
-
-## 5. Run tests
-
-```bash
-make test
-```
-
-A passing test command means the deterministic test suite completed. If pytest
-reports skipped scaffold tests, the project is still not production-ready.
-
-## 6. Run the fake-provider smoke check
-
-```bash
-make smoke
-```
-
-This uses deterministic fake providers. It does not prove real model performance.
-
-## 7. Start the local app
-
-```bash
-make run
-```
-
-Expected local URLs:
 
 | Service | URL |
 | --- | --- |
-| Backend API | `http://localhost:8000` |
-| API docs | `http://localhost:8000/docs` |
+| API | `http://localhost:8000` |
+| OpenAPI | `http://localhost:8000/docs` |
 | Live health | `http://localhost:8000/health/live` |
-| Browser demo | `http://localhost:5173` |
+| Unfinished realtime page | `http://localhost:5173` |
 
-If the backend prints `uvicorn is not installed`, install runtime dependencies
-from your approved package mirror, then run `make run` again.
+`/health/live` means the process is up. `/health/ready` means Whisper has loaded. The mock API does not load it.
 
-## Stop the app
+## Tests
 
-Press `Ctrl+C` in the terminal running `make run`.
+```bash
+make test
+make lint
+```
+
+Some realtime modules are still skipped. Those skips are the unfinished gateway. They do not mean the batch speech tests failed.
+
+Stop `make dev` with `Ctrl+C`. Stop Compose with `docker compose -f hf/docker-compose.yml down`.

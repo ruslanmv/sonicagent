@@ -15,13 +15,11 @@ Example model path pattern:
 {lang}/{locale}/{speaker}/{quality}/{voice_id}.onnx.json
 ```
 
-Download scripts are placeholders until model hashes and redistribution review are finalized:
+Install the pinned Whisper Tiny checkpoint and every voice in the registry with:
 
 ```bash
-python scripts/download_voice.py --voice it_IT-paola-medium
-python scripts/download_stt_model.py --model small
-python scripts/verify_model_checksums.py
+python hf/scripts/setup-models.py --model tiny --tts --cache-dir ~/.cache/sonicagent-rt
 ```
 
-The model cache defaults to `~/.cache/SonicAgent` and should be mounted as a persistent volume in deployments.
+Whisper Tiny has a pinned revision and `model.bin` checksum. Each Piper voice in `voices.json` has `model_sha256` from the mirror's Git LFS oid and `config_sha256` from the config file bytes. The model cache should be a persistent volume in any deployment.
 

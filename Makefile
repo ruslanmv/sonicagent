@@ -1,4 +1,4 @@
-.PHONY: install run test lint format typecheck test-contract test-integration web-install web-dev web-test docs-build smoke benchmark-smoke models-min models-verify clean
+.PHONY: install run test lint format typecheck test-contract test-integration web-install web-dev web-test docs-build smoke benchmark-smoke benchmark-endpoints models-min models-verify clean
 
 install:
 	python -m pip install --no-build-isolation --no-deps -e .
@@ -45,6 +45,9 @@ docs-build:
 
 smoke benchmark-smoke:
 	python -m benchmarks.cli --scenario benchmarks/scenarios/short_commands.yaml --providers fake --output benchmarks/results/smoke.json
+
+benchmark-endpoints:
+	python -m benchmarks.endpoints.probe --base-url "$${SONIC_BENCH_URL:-https://ruslanmv-sonicagent.hf.space}" --repeats "$${SONIC_BENCH_REPEATS:-5}" --output benchmarks/results/endpoints.json --markdown benchmarks/results/endpoints.md
 
 models-min:
 	python scripts/download_default_models.py --cache-dir "$${SONIC_MODEL_CACHE_DIR:-$$HOME/.cache/sonicagent-rt}" --minimal

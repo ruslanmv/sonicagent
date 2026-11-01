@@ -1,42 +1,39 @@
 # Deployment
 
-Deployment means running SonicAgent-RT somewhere other people or systems can use
-it. The current repository is for development and testing, not production use.
+Two hosts run the speech API today. Neither one is a production service level.
 
-## Local development
-
-Use this while building or trying the app:
+## Local voice image
 
 ```bash
-make install
-make run
+docker compose -f hf/docker-compose.yml up --build
 ```
 
-## Container development
+The image listens on container port `7860` and Compose publishes `http://127.0.0.1:8000`. Voice Studio is `/`. Readiness is `/health/ready`, after Whisper has loaded. Live health is only process liveness.
 
-A Docker Compose file is included for local experiments:
+Windows, secrets, and rollback are in `hf/README.md`.
 
-```bash
-docker compose config
-docker compose up --build
-```
+## Hugging Face Space
 
-## Production requirements
+`hf/scripts/deploy-space.sh` stages this same image for the existing Space `ruslanmv/SonicAgent`. The Space is a remote CPU. It can sleep. It is not on-device inference and it is not an offline Quest mode.
 
-Before production deployment, prepare:
+Put `SONIC_API_KEY` in a Space secret. Do not bake it into the image or the Voice Studio bundle.
 
-- TLS/HTTPS in front of the API and WebSocket.
-- Real authentication and short-lived session tokens.
-- An allowlist for browser origins.
-- Rate limits and session concurrency limits.
+The root `docker compose up` file starts the mock API and the unfinished web client. It does not start Whisper.
+
+## Before a production deployment
+
+- TLS in front of the API.
+- Real authentication. The development token is rejected when auth mode is `token`.
+- An origin allowlist for any browser that calls the API with cookies.
+- Rate limits and a concurrency cap. The public demo already has its own caps.
 - A persistent model cache outside Git.
-- Monitoring for errors, latency, and resource usage.
+- Voice checksums in `voices.json` checked against the installed ONNX and config files.
+- Monitoring that records timings and error codes, not transcript text.
 - A rollback plan.
-- A privacy review for audio and transcript handling.
 
-## Do not deploy yet if
+## Do not treat these as production
 
-- `make run` cannot start the backend.
-- Tests still show placeholder-only skips.
-- Runtime dependencies are missing.
-- Model checksums and licenses are not verified.
+- A sleeping CPU Basic Space.
+- `/health/live` used as a model check.
+- The WebSocket path. It does not run a voice turn.
+- A latency number from a different machine than the one you measured.

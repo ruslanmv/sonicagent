@@ -21,28 +21,15 @@ Fix: install runtime dependencies from an approved package mirror. The browser
 dev server may still start, but the API backend will not be available until
 `uvicorn` is installed.
 
-## Browser page opens but voice conversation does not work
+## Voice Studio does not transcribe
 
-Meaning: the frontend can load, but the full voice pipeline is not complete or
-the backend is not running.
+Open the voice image or the Space, not `http://localhost:5173`. That second page is the unfinished realtime client.
 
-Check:
-
-```bash
-make test
-make smoke
-curl http://localhost:8000/health/live
-```
-
-If the health check fails, the backend is not running.
+Check `GET /health/ready`. Live health only means the process is up. The public demo transcribes only when `SONIC_PUBLIC_DEMO_ENABLED` is true. Otherwise the page needs the bearer token.
 
 ## Tests pass but show skipped tests
 
-Meaning: some implemented checks passed, but parts of the planned product are
-still missing.
-
-Skipped scaffold tests are a production blocker. See
-[Production status](production-status.md).
+The skipped tests are the realtime modules that are not built yet. Batch speech tests are separate. See [Production status](production-status.md).
 
 ## Real model downloads fail
 

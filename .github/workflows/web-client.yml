@@ -6,8 +6,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: {node-version: "20"}
-      - run: npm install
+        with: {node-version: "22"}
+      - run: npm ci
         working-directory: clients/web
       - run: npm test
         working-directory: clients/web

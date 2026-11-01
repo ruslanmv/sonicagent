@@ -1,45 +1,28 @@
-# SonicAgent-RT
+# SonicAgent
 
-SonicAgent-RT is a server application for building real-time voice assistants.
-In plain language, it is the middle layer between a microphone, speech-to-text,
-an AI text model, text-to-speech, and a browser or Python client.
+SonicAgent is a speech service. It transcribes an utterance and returns a WAV. The same API runs in the `hf/` image on your machine and on the Hugging Face Space `ruslanmv/SonicAgent`.
 
-!!! warning "Current readiness"
-    SonicAgent-RT is **not production-ready yet**. The repository still has known
-    scaffolded tests and missing real-model runtime dependencies in some
-    environments. See [Production status](production-status.md) before using it
-    outside local development.
+The realtime path (WebSocket audio, voice activity detection, barge-in, and a streaming language model) is designed and not running. See [Production status](production-status.md).
 
 ## Who is this documentation for?
 
-- **Non-expert users** who want to understand what the app does and how to try it.
-- **Operators** who need to install, configure, and troubleshoot the service.
-- **Developers** who need protocol details, architecture notes, and test commands.
+- **Operators** who install the voice image or the Space.
+- **Product engineers** who call the batch HTTP API.
+- **Developers** who need the protocol, the tests, and the remaining realtime work.
 
 ## Start here
 
-1. Read [What this app does](user-guide/what-is-sonicagent.md).
-2. Follow [Install and run](user-guide/install-and-run.md).
-3. Open the [Browser demo guide](user-guide/browser-demo.md).
-4. If something fails, check [Troubleshooting basics](troubleshooting.md).
+1. Read [What this service does](user-guide/what-is-sonicagent.md).
+2. Follow [Install and run](user-guide/install-and-run.md) for the voice image.
+3. Open [Voice Studio](user-guide/browser-demo.md).
+4. If something fails, check [Troubleshooting](troubleshooting.md).
 
-## The short version
+## Checks
 
 ```bash
 make install
 make test
-make smoke
-make run
+make lint
 ```
 
-What those commands mean:
-
-| Command | Purpose |
-| --- | --- |
-| `make install` | Installs the local Python package and web-client dependencies. |
-| `make test` | Runs deterministic backend and web tests. |
-| `make smoke` | Runs a fake-provider smoke benchmark. |
-| `make run` | Starts the backend and browser demo for local use. |
-
-If `make run` says `uvicorn is not installed`, install the Python runtime
-dependencies from an approved package mirror before starting the backend.
+`make dev` starts the mock API on port 8000. It does not load Whisper or Piper. The speech service is `docker compose -f hf/docker-compose.yml up --build`.
