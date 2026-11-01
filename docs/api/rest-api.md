@@ -10,12 +10,14 @@ creation, model/voice information, and metrics.
 | `GET /health/live` | Confirms the process is alive. |
 | `GET /health/ready` | Reports whether required runtime pieces are ready. |
 | `POST /v1/sessions` | Creates a voice session and returns WebSocket details. |
-| `GET /v1/voices` | Lists known voices. |
+| `GET /v1/voices` | Lists every Piper voice in the registry, with role, gender, quality, and whether that file is installed on this machine. |
+| `POST /v1/voices/warm` | HV9. Loads one voice's model before its first sentence (service key required). Answers `voice_id`, `cold`, `ms`, `load_ms`. Presets sharing an ONNX file load it once. |
 | `GET /v1/models/stt` | Lists known speech-to-text models. |
 | `GET /metrics` | Prometheus-style metrics. |
-| `GET /v1/audio/capabilities` | Bearer token. Reports STT and TTS readiness. |
+| `GET /v1/audio/capabilities` | Bearer token. Reports STT, TTS, the full-turn socket, and the speech-only stream. |
 | `POST /v1/audio/transcriptions` | Bearer token. Multipart audio in, JSON transcript out. |
 | `POST /v1/audio/speech` | Bearer token. Optional Piper WAV. Returns 503 when TTS is not installed. |
+| `POST /v1/audio/stream-sessions` | Bearer token. Speech-only session. Returns a resume token, not the API key. |
 
 ## Session creation in plain language
 

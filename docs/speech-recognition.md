@@ -1,6 +1,6 @@
 # Speech recognition
 
-Batch speech-to-text is implemented with `faster-whisper` and CTranslate2. The realtime socket transcribes one endpointed utterance and sends `transcript.final`. It does not stream partial hypotheses.
+Batch speech-to-text is implemented with `faster-whisper` and CTranslate2. The full-turn socket and the speech-only socket both transcribe one endpointed utterance and send `transcript.final`. Neither socket streams partial hypotheses. Moonshine Streaming and Nemotron are listed in capabilities with `ready: false` until a checkpoint is installed and checked. Italian stays on faster-whisper.
 
 ## What runs
 
