@@ -42,7 +42,7 @@ Portuguese listening works. The Portuguese voices in the mirror, Edresson and Fa
 
 ## Voices
 
-Source mirror: [`ruslanmv/hp-piper-voices`](https://huggingface.co/ruslanmv/hp-piper-voices). The selectable ids live in [`model_registry/voices.json`](model_registry/voices.json).
+Source mirror: [`ruslanmv/hp-piper-voices`](https://huggingface.co/ruslanmv/hp-piper-voices). The selectable ids live in [`model_registry/voices.json`](model_registry/voices.json). The classified list, including what can be upgraded, is [`catalog/README.md`](catalog/README.md). `GET /v1/voices` returns the same library.
 
 | Locale | Companion | Secretary |
 | --- | --- | --- |
@@ -184,20 +184,21 @@ The root Compose file starts the API and web scaffold. The voice image, which ru
 docker compose -f hf/docker-compose.yml up --build
 ```
 
-That serves `http://127.0.0.1:8000` and is documented in [`hf/README.md`](hf/README.md). The Voice Studio is the page at `/`. The realtime socket is `/v1/realtime/{id}` after `POST /v1/sessions`. Silero runs only when `SONIC_VAD_MODEL_PATH` points at the pinned ONNX file. Otherwise endpointing is energy-based. GPU access, Redis, Prometheus dashboards, and OpenTelemetry remain templates under `deploy/`.
+That serves `http://127.0.0.1:8000` and is documented in [`hf/README.md`](hf/README.md). The Voice Studio is the page at `/`. The realtime socket is `/v1/realtime/{id}` after `POST /v1/sessions`. That socket runs a full turn, including SonicAgent's language model. Speech-only clients use `POST /v1/audio/stream-sessions` and `/v1/audio/stream/{id}` instead. Silero runs only when `SONIC_VAD_MODEL_PATH` points at the pinned ONNX file. Otherwise endpointing is energy-based. GPU access, Redis, Prometheus dashboards, and OpenTelemetry remain templates under `deploy/`.
 
 ## Remaining work
 
-Batch speech, Voice Studio, the voice image, the measured HTTP report, and a realtime turn are in the tree. Still outside a service level:
+Batch speech, Voice Studio, the voice image, the measured HTTP report, a realtime turn, and a speech-only stream are in the tree. The speech-only stream does not call the language model. faster-whisper on that stream is endpointed, so it does not emit partial transcripts. Piper audio is sentence by sentence, not sample by sample. Still outside a service level:
 
+- Moonshine Streaming, Nemotron streaming, and Pocket TTS are reported as not installed. They are not in the default image.
 - Put the pinned Silero file on disk if you want that detector. The pin is in `src/sonicagent_rt/vad/silero_onnx.py`.
 - Terminate TLS in front of the process. `scripts/export-sbom.sh` writes a CycloneDX file when the tool is installed. Release signing is not wired.
-- OllaBridge does not route audio. No headset run is claimed.
+- OllaBridge does not route this socket. One Quest 3 browser measurement of local Whisper Tiny is recorded in `benchmarks/reports/quest3-browser-2d-local-whisper-tiny.md`. It is not a remote-streaming result, and it does not measure headset TTS.
 - The browser client at `clients/web` captures, resamples, and plays PCM. Voice Studio remains the page on the Space.
 
 ## API overview
 
-The speech routes are `POST /v1/audio/transcriptions` and `POST /v1/audio/speech`. They require a bearer token. `POST /v1/sessions` requires the same token and returns a random resume token for `/v1/realtime/{session_id}`. The example below shows the field names. It is not a live response.
+The speech routes are `POST /v1/audio/transcriptions` and `POST /v1/audio/speech`. They require a bearer token. `POST /v1/sessions` requires the same token and returns a random resume token for `/v1/realtime/{session_id}`. `POST /v1/audio/stream-sessions` returns a different resume token for `/v1/audio/stream/{session_id}`. That socket transcribes and speaks. It does not call the language model. The example below shows the full-turn field names. It is not a live response.
 
 ### Create a session
 

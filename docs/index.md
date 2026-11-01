@@ -2,7 +2,7 @@
 
 SonicAgent is a speech service. It transcribes an utterance and returns a WAV. The same API runs in the `hf/` image on your machine and on the Hugging Face Space `ruslanmv/SonicAgent`.
 
-The realtime path (WebSocket audio, voice activity detection, barge-in, and a streaming language model) is designed and not running. See [Production status](production-status.md).
+A full-turn socket at `/v1/realtime/{id}` can also run voice activity detection, a language model, and phrase audio. A separate speech-only socket at `/v1/audio/stream/{id}` transcribes and speaks without calling that language model. See [Production status](production-status.md).
 
 ## Who is this documentation for?
 

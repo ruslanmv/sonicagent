@@ -20,6 +20,7 @@ from sonicagent_rt.audio.decode import decode_audio, is_silence
 from sonicagent_rt.auth.service_token import enforce_origin, require_api_key
 from sonicagent_rt.config import Settings
 from sonicagent_rt.observability.stt_metrics import observe_stt, observe_tts
+from sonicagent_rt.speech_stream.store import OPTION_VALUES
 from sonicagent_rt.stt.errors import (
     AudioTooLarge,
     DuplicateRequest,
@@ -36,6 +37,7 @@ from sonicagent_rt.stt.language_detection import normalize_language
 from sonicagent_rt.stt.models import public_model_id
 
 logger = logging.getLogger("sonicagent_rt.api.audio")
+
 router = APIRouter(prefix="/audio", tags=["audio"])
 _REQUEST_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
@@ -102,6 +104,58 @@ async def capabilities(request: Request, _: None = Depends(require_audio_access)
         },
         "tts": tts.as_dict(),
         "realtime": realtime_status(settings, stt),
+        "streaming": {
+            "available": True,
+            "protocol": "sonic-speech-stream-v1",
+            "input_codecs": ["pcm_s16le"],
+            "input_sample_rate": settings.input_sample_rate,
+            "frame_ms": [20, 40],
+            "modes": ["stt_only", "tts_only", "duplex_speech"],
+            "partial_results": False,
+            "llm": False,
+            # HV3. "available" says the socket exists; these say whether a turn
+            # would actually work right now. A sleeping Space reports
+            # available with stt_ready false — show "warming", never a transcript.
+            "stt_ready": bool(stt.ready),
+            "tts_ready": bool(tts.ready),
+            "options_supported": {key: list(values) for key, values in OPTION_VALUES.items()},
+        },
+        "stt_providers": [
+            {
+                "id": "faster-whisper",
+                "languages": settings.parsed_stt_languages(),
+                "ready": bool(stt.ready),
+                "streaming_mode": "endpointed",
+                "partial_results": False,
+            },
+            {
+                "id": "moonshine-streaming",
+                "languages": ["en"],
+                "ready": False,
+                "streaming_mode": "incremental",
+                "reason": "not-installed",
+            },
+            {
+                "id": "nemotron-stream",
+                "languages": ["en", "it"],
+                "ready": False,
+                "streaming_mode": "incremental",
+                "reason": "not-installed",
+            },
+        ],
+        "tts_providers": [
+            {
+                "id": "piper",
+                "ready": bool(tts.ready),
+                "streaming_audio": True,
+                "incremental": "sentence",
+            },
+            {
+                "id": "pocket-tts-stream",
+                "ready": False,
+                "reason": "not-installed",
+            },
+        ],
         "route": {"location": "sonicagent"},
     }
 
