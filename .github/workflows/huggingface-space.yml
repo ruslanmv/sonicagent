@@ -22,12 +22,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build deploy tree and push to HF Space
+      - name: Install Hugging Face upload client
+        run: pip install -U "huggingface_hub>=1.1" "hf-xet"
+
+      - name: Build deploy tree and upload to HF Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           set -euo pipefail
-
           if [ -z "${HF_USERNAME}" ] || [ -z "${SPACE_NAME}" ]; then
             echo "Missing HF_USERNAME or SPACE_NAME repository secret."
             exit 1
@@ -36,16 +38,7 @@ jobs:
             echo "Missing HF_TOKEN secret."
             exit 1
           fi
-
           DEPLOY_DIR="$(mktemp -d)"
           python3 hf/scripts/prepare-space.py --dest "$DEPLOY_DIR"
-
-          cd "$DEPLOY_DIR"
-          git init -b main
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Deploy from ${GITHUB_SHA}"
-          git config credential.helper '!f() { echo "username=${HF_USERNAME}"; echo "password=${HF_TOKEN}"; }; f'
-          git push --force "https://huggingface.co/spaces/${HF_USERNAME}/${SPACE_NAME}" HEAD:main
+          python3 hf/scripts/upload-space.py --dest "$DEPLOY_DIR"
           echo "Sync complete for ${HF_USERNAME}/${SPACE_NAME}."
