@@ -415,7 +415,7 @@ demo endpoints. Disable the public demo if compute resources are abused.
 For a widely promoted service, add user authentication, provider quotas,
 and a shared rate limiter before opening it publicly.
 
-The published Space sets `SONIC_PUBLIC_DEMO_TTS_ENABLED=true` so the Voice Studio Speak panel can generate a short WAV. Public synthesis is still capped at 180 characters and shares the demo rate limit. Set the variable to `false` to hide that button from anonymous visitors. The private `/v1/audio/speech` route continues to require the bearer token.
+The published Space sets `SONIC_PUBLIC_DEMO_TTS_ENABLED=true` so the Voice Studio Speak panel can generate a short WAV. Download speech, at the bottom of that card, saves the latest WAV in the browser. The server does not store it. Public synthesis is still capped at 180 characters and shares the demo rate limit. Set the variable to `false` to hide that button from anonymous visitors. The private `/v1/audio/speech` route continues to require the bearer token.
 
 UI routes:
 

@@ -20,6 +20,7 @@ FLAG_END_OF_UTTERANCE = 1 << 0
 CONTROL_EVENTS = ("ping", "session.update", "response.cancel")
 SERVER_EVENTS = (
     "session.created",
+    "session.updated",
     "speech.started",
     "speech.frame",
     "speech.stopped",

@@ -20,11 +20,15 @@ def create_llm(settings: Settings) -> LanguageModel:
     if provider in {"", "mock"}:
         return MockLLMProvider()
     if provider in {"openai", "openai-compatible", "ollama"}:
+        base_url = settings.llm_base_url.rstrip("/")
+        if provider == "ollama" and not base_url.endswith("/v1"):
+            base_url = f"{base_url}/v1"
         return OpenAICompatibleLLM(
-            base_url=settings.llm_base_url,
+            base_url=base_url,
             api_key=settings.llm_api_key,
             model=settings.llm_model,
             temperature=settings.llm_temperature,
             max_tokens=settings.llm_max_tokens,
+            timeout_sec=settings.llm_timeout_sec,
         )
     raise ValueError("SONIC_LLM_PROVIDER must be mock, openai-compatible, or ollama")

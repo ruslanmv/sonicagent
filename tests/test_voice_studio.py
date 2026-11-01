@@ -56,8 +56,10 @@ def test_static_frontend_complete():
     html = (UI / "index.html").read_text(encoding="utf-8")
     css = (UI / "style.css").read_text(encoding="utf-8")
     js = (UI / "app.js").read_text(encoding="utf-8")
-    assert 'href="/ui-assets/style.css"' in html
-    assert 'src="/ui-assets/app.js"' in html
+    assert 'href="/ui-assets/style.css' in html
+    assert 'src="/ui-assets/app.js' in html
+    assert 'id="downloadSpeechBtn"' in html
+    assert "E.downloadSpeechBtn.disabled = !S.speechBlob" in js
     for field in ("recordBtn", "uploadTab", "transcribeBtn", "transcriptText",
                   "synthesizeBtn", "audioPlayer", "guestModeBtn", "tokenInput"):
         assert 'id="' + field + '"' in html
@@ -136,8 +138,12 @@ def test_hf_entrypoint_serves_voice_studio_and_keeps_api():
     index = client.get("/")
     assert index.status_code == 200
     assert "Voice Studio" in index.text
-    assert client.get("/ui-assets/app.js").status_code == 200
-    assert client.get("/ui-assets/style.css").status_code == 200
+    script = client.get("/ui-assets/app.js")
+    assert script.status_code == 200
+    assert script.headers["cache-control"] == "no-cache"
+    style = client.get("/ui-assets/style.css")
+    assert style.status_code == 200
+    assert style.headers["cache-control"] == "no-cache"
     assert client.get("/api-info").json()["service"] == "sonicagent"
     assert client.get("/health/live").json()["status"] == "ok"
     assert client.get("/demo/status").json()["enabled"] is False

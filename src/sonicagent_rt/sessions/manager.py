@@ -41,5 +41,11 @@ class SessionManager:
     def authenticate(self, session_id: str, resume_token: str) -> SpeechSession:
         return self._store.take(session_id, resume_token)
 
+    def acquire(self, session_id: str, resume_token: str) -> tuple[SpeechSession, bool]:
+        return self._store.acquire(session_id, resume_token)
+
+    def release(self, session_id: str) -> None:
+        self._store.release(session_id)
+
     def discard(self, session_id: str) -> None:
         self._store.discard(session_id)

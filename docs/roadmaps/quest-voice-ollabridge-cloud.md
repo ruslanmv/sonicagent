@@ -5,7 +5,7 @@
 **Target repositories:** [SonicAgent](https://github.com/ruslanmv/sonicagent) (this RFC), [OllaBridge](https://github.com/ruslanmv/ollabridge), [OllaBridge Cloud](https://github.com/ruslanmv/ollabridge-cloud), [3D-Avatar-Chatbot](https://github.com/ruslanmv/3D-Avatar-Chatbot/tree/claude/awesome-brown-khqcdj) (target feature branch)  
 **Motivation:** reliable, privacy-aware English/Italian STT and optional TTS for desktop, Meta Quest Browser WebXR VR/MR, and desktop Chrome on Windows through Quest Air Link, with **one OllaBridge pairing** and **no paid Google/Azure/OpenAI speech API dependency**.
 
-> OllaBridge routing, the Avatar provider, and realtime streaming are still proposed. Do not describe those as running. SonicAgent's batch HTTP API is running and is documented in the README.
+> OllaBridge routing and the Avatar provider are still proposed. SonicAgent batch HTTP and an authenticated realtime turn run in this repository. The published Space image is unchanged until it is redeployed. Do not describe a headset result.
 
 ## 1. Decision and scope
 
@@ -21,9 +21,9 @@
 
 | Repository and source | Verified today | Gap |
 | --- | --- | --- |
-| SonicAgent [README](../../README.md), [STT module](../../src/sonicagent_rt/stt/faster_whisper.py), [Piper module](../../src/sonicagent_rt/tts/piper_process.py) | Batch Whisper Tiny and batch Piper run. Voice Studio and the Space serve them. | Realtime turns, voice checksum pins, and a production service level |
-| SonicAgent [WebSocket endpoint](../../src/sonicagent_rt/api/websocket/endpoint.py) | Accepts a WS, answers ping and cancellation; audio frames are acknowledged as **not implemented** | No VAD, streaming LLM, or barge-in on this socket |
-| SonicAgent [session route](../../src/sonicagent_rt/api/routes/sessions.py), [browser capture](../../clients/web/src/audio/capture.ts), [models](../../model_registry/stt_models.json) | Sessions issue a random resume token. Voice Studio is the batch page. Whisper Tiny and Piper file hashes are pinned. | The browser AudioWorklet is still a scaffold |
+| SonicAgent [README](../../README.md), [STT module](../../src/sonicagent_rt/stt/faster_whisper.py), [Piper module](../../src/sonicagent_rt/tts/piper_process.py) | Batch Whisper Tiny and batch Piper run. Voice Studio and the Space serve them. Voice checksums are pinned. | A production service level, and a Space image that includes the realtime socket |
+| SonicAgent [WebSocket endpoint](../../src/sonicagent_rt/api/websocket/endpoint.py) | Authenticated PCM turns, energy endpointing, barge-in, and phrase audio when Piper is ready. Silero runs only with the pinned file. | No headset measurement of that socket |
+| SonicAgent [session route](../../src/sonicagent_rt/api/routes/sessions.py), [browser capture](../../clients/web/src/audio/capture.ts), [models](../../model_registry/stt_models.json) | Sessions issue a random resume token. `clients/web` resamples and frames PCM. Voice Studio stays the batch page. | OllaBridge does not route the socket |
 | OllaBridge [chat route](https://github.com/ruslanmv/ollabridge/blob/master/src/ollabridge/api/main.py), [avatar relay](https://github.com/ruslanmv/ollabridge/blob/master/src/ollabridge/api/avatar_session.py) | Local Ollama-compatible chat and existing authenticated avatar socket relay | No general SonicAgent STT/TTS API |
 | OllaBridge local [CloudBridgeManager](https://github.com/ruslanmv/ollabridge/blob/master/src/ollabridge/cloud/bridge_manager.py) | Persistent device-to-cloud relay with reconnect/capability advertisements | No SonicAgent voice capability or dispatch |
 | OllaBridge Cloud [RelayHub](https://github.com/ruslanmv/ollabridge-cloud/blob/master/src/ollabridge_cloud/services/relay_hub.py), [homepilot media pattern](https://github.com/ruslanmv/ollabridge-cloud/blob/master/src/ollabridge_cloud/api/homepilot_media_bridge.py) | User/device-scoped JSON request-response relay; a media endpoint already converts bounded bytes through base64 | Not a low-latency bidirectional **binary** audio relay; do not send continuous 20ms PCM as JSON RPC |
