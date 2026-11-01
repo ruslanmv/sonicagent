@@ -14,12 +14,18 @@ def test_speak_panel_has_ready_examples_and_autoplay():
     assert 'id="voiceGrid"' in html
     assert 'id="voiceFilters"' in html
     assert 'id="voiceSearch"' in html
-    assert 'id="playerDock"' in html
+    assert 'id="playerDock"' not in html
+    assert "player-dock" not in (UI / "style.css").read_text(encoding="utf-8")
+    assert "<audio id=\"audioPlayer\" class=\"sr-only\" preload=\"none\"></audio>" in html
+    assert "controls" not in html.split("audioPlayer")[1][:80]
     assert "audioPlayer.play" in script
+    assert "audioPlayer.pause" in script
+    assert "⏸" in script
     assert "maybeAutoTranscribe" in script
     assert "Transcription starts when you stop." in script
     assert "Audio is sent only when you click Transcribe" not in script
-    assert "Playing now. Replay on the player is optional." in script
+    assert "Playing now. Replay on the player is optional." not in script
+    assert "Playing generated voice" not in script
     assert "/ui-assets/examples/" in script
     assert "grid-template-columns:1fr 1fr" in (UI / "style.css").read_text(encoding="utf-8")
     assert "Lessac · English" not in html + script

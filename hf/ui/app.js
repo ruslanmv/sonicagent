@@ -12,7 +12,7 @@
     "audioFileName","audioFileSize","removeAudioBtn","languageSelect","transcribeBtn",
     "transcriptText","resultMeta","copyBtn","ttsInput","charCounter",
     "ttsLanguage","ttsVoice","voiceSearch","voiceFilters","voiceGrid","synthesizeBtn",
-    "audioResultTitle","audioResultSubtitle","audioPlayer","playerDock","ttsNotice","toast"
+    "audioPlayer","ttsNotice","toast"
   ].forEach(function (id) { E[id] = $(id); });
   var S = {
     mode:"token", token:"", demoEnabled:false, demoTts:false, demoSeconds:8,
@@ -331,23 +331,13 @@
       if (pending && pending.catch) pending.catch(function(){});
     } catch (_) {}
   }
-  function playUrl(url, title, owned) {
+  function playUrl(url, owned) {
     if (S.audioUrl && S.audioUrl !== url) URL.revokeObjectURL(S.audioUrl);
     S.audioUrl = owned ? url : null;
-    E.playerDock.hidden = false;
-    document.body.classList.add("has-player");
     E.audioPlayer.src = url;
-    E.audioResultTitle.textContent = title;
-    E.audioResultSubtitle.textContent = "Starting playback…";
-    markCards();
     var pending = E.audioPlayer.play();
-    if (pending && pending.then) {
-      pending.then(function(){
-        E.audioResultSubtitle.textContent = "Playing now. Replay on the player is optional.";
-      }).catch(function(){
-        E.audioResultSubtitle.textContent = "Ready. Press play if the browser blocked automatic playback.";
-      });
-    }
+    if (pending && pending.then) pending.then(markCards).catch(function(){ S.playingId=""; markCards(); });
+    else markCards();
   }
   var FILTERS=[["all","All"],["companion","Companion"],["secretary","Secretary"],["female","Female"],["male","Male"]];
   var GROUPS=["Companion","Secretary","More female voices","More male voices","Other speakers"];
@@ -443,11 +433,26 @@
     var cards=E.voiceGrid.querySelectorAll(".voice-card");
     cards.forEach(function(card){
       var id=card.getAttribute("data-voice");
+      var active=id===S.playingId && !E.audioPlayer.paused;
       card.classList.toggle("is-selected", id===E.ttsVoice.value);
-      card.classList.toggle("is-playing", id===S.playingId);
+      card.classList.toggle("is-playing", active);
+      var button=card.querySelector(".voice-play");
+      if (button) {
+        button.textContent=active?"⏸":"▶";
+        button.setAttribute("aria-label", (active?"Pause ":"Play ")+button.getAttribute("data-name"));
+      }
     });
   }
   function playVoice(voice) {
+    if (S.playingId===voice.id && E.audioPlayer.src) {
+      primePlayback();
+      if (E.audioPlayer.paused) {
+        var again=E.audioPlayer.play();
+        if (again && again.catch) again.catch(function(){ S.playingId=""; markCards(); });
+      } else E.audioPlayer.pause();
+      markCards();
+      return;
+    }
     primePlayback();
     S.playingId=voice.id;
     chooseVoice(voice.id);
@@ -457,7 +462,8 @@
       return response.blob();
     }).then(function(blob){
       if (!blob.size) throw new Error("empty");
-      playUrl(URL.createObjectURL(blob), voice.label, true);
+      if (S.playingId!==voice.id) return;
+      playUrl(URL.createObjectURL(blob), true);
     }).catch(function(){
       if (!voice.sample) return;
       E.ttsInput.value=voice.sample;
@@ -492,6 +498,7 @@
     var play=document.createElement("button");
     play.type="button";
     play.className="voice-play";
+    play.setAttribute("data-name", voice.name);
     play.setAttribute("aria-label", "Play "+voice.name);
     play.textContent="▶";
     play.addEventListener("click", function(){ playVoice(voice); });
@@ -565,6 +572,8 @@
   }).then(applyCatalog).catch(function(err){
     E.ttsNotice.textContent="Voice list failed to load. "+err.message;
   });
+  E.audioPlayer.addEventListener("play", markCards);
+  E.audioPlayer.addEventListener("pause", markCards);
   E.audioPlayer.addEventListener("ended", function(){ S.playingId=""; markCards(); });
   E.voiceSearch.addEventListener("input", renderBoard);
   E.ttsLanguage.addEventListener("change", function(){ E.voiceSearch.value=""; renderVoices(); });
@@ -573,13 +582,11 @@
   });
   E.synthesizeBtn.addEventListener("click",async function(){
     if(S.busy || !authenticated() || !E.ttsInput.value.trim())return;
-    S.playingId=selectedVoice().id;
+    var voiceId=selectedVoice().id;
     primePlayback();
     S.busy=true;updateButtons();E.synthesizeBtn.querySelector("span").textContent="Synthesizing…";
-    E.audioResultTitle.textContent="Generating voice…";
-    E.audioResultSubtitle.textContent="Piper synthesis in progress";
     var body={
-      text:E.ttsInput.value.trim(),voice:selectedVoice().id,
+      text:E.ttsInput.value.trim(),voice:voiceId,
       language:E.ttsLanguage.value,format:"wav"
     };
     try {
@@ -591,11 +598,11 @@
       if(!/audio|octet-stream/i.test(resp.headers.get("content-type") || ""))throw new Error("Expected WAV audio");
       var blob=await resp.blob();
       if(!blob.size)throw new Error("Empty speech response");
-      playUrl(URL.createObjectURL(blob), "Voice generated", true);
-      notify("Playing generated voice");
+      S.playingId=voiceId;
+      playUrl(URL.createObjectURL(blob), true);
     } catch(err){
-      E.audioResultTitle.textContent="Voice unavailable";
-      E.audioResultSubtitle.textContent=err.name==="AbortError"?"Request timed out":err.message;
+      S.playingId="";
+      markCards();
       notify("Piper error: "+err.message,true);
     } finally{
       S.busy=false;E.synthesizeBtn.querySelector("span").textContent="Generate voice";updateButtons();
