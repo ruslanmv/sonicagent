@@ -12,7 +12,7 @@
     "audioFileName","audioFileSize","removeAudioBtn","languageSelect","transcribeBtn",
     "transcriptText","resultMeta","copyBtn","ttsInput","charCounter",
     "ttsLanguage","ttsVoice","voiceSearch","voiceFilters","voiceGrid","synthesizeBtn",
-    "audioPlayer","ttsNotice","toast"
+    "audioPlayer","ttsNotice","downloadSpeechBtn","toast"
   ].forEach(function (id) { E[id] = $(id); });
   var S = {
     mode:"token", token:"", demoEnabled:false, demoTts:false, demoSeconds:8,
@@ -21,7 +21,7 @@
     file:null, transcript:"", audioUrl:null, start:0, timer:null, toastTimer:null,
     audioCtx:null, analyser:null, microphoneNode:null, ready:false,
     ttsReady:false, ttsKnown:false, raf:null, primed:false, autoTried:false,
-    voiceFilter:"all", playingId:""
+    voiceFilter:"all", playingId:"", speechBlob:null, speechName:"sonicagent-speech.wav"
   };
   function notify(text,isError) {
     E.toast.textContent = String(text);
@@ -376,9 +376,9 @@
   }
   function voiceNotice() {
     var item=selectedVoice();
-    if (item.role==="companion") return "Companion voice: warmer, slower, and softer. The WAV stays in this browser tab.";
-    if (item.role==="secretary") return "Secretary voice: clearer and a little faster, for work. The WAV stays in this browser tab.";
-    return (item.label || "This voice") + " matches the language you selected. The WAV stays in this browser tab.";
+    if (item.role==="companion") return "Companion voice: warmer, slower, and softer. Download the WAV after it is generated.";
+    if (item.role==="secretary") return "Secretary voice: clearer and a little faster, for work. Download the WAV after it is generated.";
+    return (item.label || "This voice") + " matches the language you selected. Download the WAV after it is generated.";
   }
   function syncSelect(list) {
     var keep=E.ttsVoice.value;
@@ -598,6 +598,10 @@
       if(!/audio|octet-stream/i.test(resp.headers.get("content-type") || ""))throw new Error("Expected WAV audio");
       var blob=await resp.blob();
       if(!blob.size)throw new Error("Empty speech response");
+      S.speechBlob=blob;
+      S.speechName="sonicagent-"+String(voiceId || "speech").replace(/[^a-zA-Z0-9._-]+/g,"-").slice(0,80)+".wav";
+      E.downloadSpeechBtn.disabled=false;
+      E.downloadSpeechBtn.textContent="Download speech";
       S.playingId=voiceId;
       playUrl(URL.createObjectURL(blob), true);
     } catch(err){
@@ -607,6 +611,18 @@
     } finally{
       S.busy=false;E.synthesizeBtn.querySelector("span").textContent="Generate voice";updateButtons();
     }
+  });
+  E.downloadSpeechBtn.addEventListener("click", function(){
+    if (!S.speechBlob) return;
+    var url=URL.createObjectURL(S.speechBlob);
+    var link=document.createElement("a");
+    link.href=url;
+    link.download=S.speechName;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+    notify("Speech file ready");
   });
   window.addEventListener("pagehide",function(){
     if(S.stream)S.stream.getTracks().forEach(function(t){t.stop();});
