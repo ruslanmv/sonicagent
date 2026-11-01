@@ -21,5 +21,5 @@ Install the pinned Whisper Tiny checkpoint and every voice in the registry with:
 python hf/scripts/setup-models.py --model tiny --tts --cache-dir ~/.cache/sonicagent-rt
 ```
 
-Whisper Tiny has a pinned revision and `model.bin` checksum. Piper `model_sha256` and `config_sha256` values in `voices.json` are still `TODO`. Do not treat those as pins. The model cache should be a persistent volume in any deployment.
+Whisper Tiny has a pinned revision and `model.bin` checksum. Each Piper voice in `voices.json` has `model_sha256` from the mirror's Git LFS oid and `config_sha256` from the config file bytes. The model cache should be a persistent volume in any deployment.
 

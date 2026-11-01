@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 
 from sonicagent_rt.api.errors import error_response
+from sonicagent_rt.api.realtime_status import realtime_status
 from sonicagent_rt.audio.decode import decode_audio, is_silence
 from sonicagent_rt.auth.service_token import enforce_origin, require_api_key
 from sonicagent_rt.config import Settings
@@ -100,7 +101,7 @@ async def capabilities(request: Request, _: None = Depends(require_audio_access)
             "reason": stt.reason,
         },
         "tts": tts.as_dict(),
-        "realtime": {"available": False, "ready": False, "reason": "not-implemented"},
+        "realtime": realtime_status(settings, stt),
         "route": {"location": "sonicagent"},
     }
 

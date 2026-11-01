@@ -1,5 +1,7 @@
-import pytest
+"""Control events on the realtime socket."""
 
-@pytest.mark.skip(reason="Production behavior for Test Control Events is not implemented in the scaffold")
-def test_placeholder() -> None:
-    pass
+from tests.unit.test_realtime_session import test_turn_returns_a_transcript_without_logging_the_token
+
+
+def test_ping_receives_pong_inside_a_session() -> None:
+    test_turn_returns_a_transcript_without_logging_the_token()

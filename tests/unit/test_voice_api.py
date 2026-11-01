@@ -145,7 +145,8 @@ def test_ready_true_only_when_engine_is_ready() -> None:
         body = client.get("/health/ready").json()
     assert body["ready"] is True
     assert body["stt"]["model"] == "whisper-tiny"
-    assert body["realtime"]["ready"] is False
+    assert body["realtime"]["ready"] is True
+    assert body["realtime"]["vad"] == "energy"
 
 
 def test_transcription_requires_authentication() -> None:
@@ -305,7 +306,9 @@ def test_missing_model_and_capabilities() -> None:
     assert caps.json()["stt"]["available"] is False
     assert caps.json()["stt"]["ready"] is False
     assert caps.json()["tts"]["available"] is False
-    assert caps.json()["realtime"]["reason"] == "not-implemented"
+    assert caps.json()["realtime"]["available"] is True
+    assert caps.json()["realtime"]["ready"] is False
+    assert caps.json()["realtime"]["reason"] == "library-missing"
     assert "device_id" not in caps.json()["route"]
     assert speech.status_code == 503
     assert speech.json()["error"]["code"] == "model_unavailable"

@@ -58,7 +58,7 @@ Spain's Companion and Secretary profiles use speaker `F` of the two-speaker Shar
 
 ## Project status
 
-Batch speech is the product that runs. The realtime voice gateway is still a design.
+Batch speech and a realtime turn both run. Neither one is a headset service level.
 
 | Running now | Where |
 | --- | --- |
@@ -67,25 +67,25 @@ Batch speech is the product that runs. The realtime voice gateway is still a des
 | Voice Studio | `/` on the voice image and on the Space |
 | Local voice image and the Space `ruslanmv/SonicAgent` | `hf/` |
 | One measured HTTP pass against that Space | [`benchmarks/reports/hf-cpu-basic-endpoint-capability.md`](benchmarks/reports/hf-cpu-basic-endpoint-capability.md) |
+| Realtime turn | `POST /v1/sessions` then `/v1/realtime/{id}`. Energy endpointing, barge-in, mock or OpenAI-compatible text, Piper phrases when a voice is ready. |
 
 | Still open | State |
 | --- | --- |
-| Binary audio sessions, Silero VAD, barge-in, streaming LLM | Interfaces and protocol text. The WebSocket does not run a turn. |
+| Silero VAD | Not bundled. The running detector is energy endpointing. |
 | Browser AudioWorklet | Scaffold. Voice Studio is the page that listens and speaks. |
-| In-process telemetry | OpenTelemetry and Grafana files are templates. The endpoint report is a client measurement. |
-| Production operation | Security checklist, voice-file checksums, and a service level on a named machine are unfinished. |
+| In-process telemetry | OpenTelemetry and Grafana files are templates. Turn metrics are events on the socket. |
+| OllaBridge, Quest, and a service level | Cloud does not route audio. No headset test is claimed. |
 
 The published timing report is one Linux client calling Hugging Face CPU Basic. It is not a Quest, phone, or glasses result. Finish the security checklist before calling a deployment production.
 
 ## Direction
 
-The realtime gateway remains the long-term design: binary PCM from the browser, a streaming language model, phrase-by-phrase Piper, and interruption. Batch transcription and batch Piper already run. The realtime pieces stay in the repository so that contract does not drift.
+A realtime turn accepts PCM frames, endpoints them, transcribes, streams text, and speaks phrases when Piper is ready. The browser AudioWorklet and Silero file are still not part of that path.
 
-- Authenticated sessions, sequence numbers, and cancellation tokens.
-- Server-side voice activity detection.
-- OpenAI-compatible and Ollama text adapters.
-- Phrase-pipelined playback and barge-in.
-- Per-stage timings, once they are measured rather than estimated.
+- Sessions use a random resume token. `development-token` is rejected.
+- Energy endpointing, sequence checks, and barge-in cancellation run on the socket.
+- `SONIC_LLM_PROVIDER=ollama` or `openai-compatible` streams from the configured base URL. The default provider is the local mock.
+- Phrase audio is sent as PCM frames. The batch HTTP probe does not measure that path.
 
 ## Architecture
 
@@ -328,7 +328,7 @@ The voice image downloads every voice in the registry during the build. Install 
 python hf/scripts/setup-models.py --model tiny --tts --cache-dir ~/.cache/sonicagent-rt
 ```
 
-Checksum placeholders in the registry are still `TODO`. Do not treat an unverified hash as a pin. The model cache should be a persistent volume in any deployment.
+Each Piper file in the registry has a sha256. Whisper Tiny's `model.bin` checksum is pinned separately. The model cache should be a persistent volume in any deployment.
 
 ## Configuration
 

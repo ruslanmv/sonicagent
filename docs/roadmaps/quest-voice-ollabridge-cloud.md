@@ -23,7 +23,7 @@
 | --- | --- | --- |
 | SonicAgent [README](../../README.md), [STT module](../../src/sonicagent_rt/stt/faster_whisper.py), [Piper module](../../src/sonicagent_rt/tts/piper_process.py) | Batch Whisper Tiny and batch Piper run. Voice Studio and the Space serve them. | Realtime turns, voice checksum pins, and a production service level |
 | SonicAgent [WebSocket endpoint](../../src/sonicagent_rt/api/websocket/endpoint.py) | Accepts a WS, answers ping and cancellation; audio frames are acknowledged as **not implemented** | No VAD, streaming LLM, or barge-in on this socket |
-| SonicAgent [session route](../../src/sonicagent_rt/api/routes/sessions.py), [browser capture](../../clients/web/src/audio/capture.ts), [models](../../model_registry/stt_models.json) | Session route is still a development scaffold. Voice Studio is the browser that runs. Whisper Tiny is pinned. Piper hashes are still `TODO` | Harden the realtime session before public exposure |
+| SonicAgent [session route](../../src/sonicagent_rt/api/routes/sessions.py), [browser capture](../../clients/web/src/audio/capture.ts), [models](../../model_registry/stt_models.json) | Sessions issue a random resume token. Voice Studio is the batch page. Whisper Tiny and Piper file hashes are pinned. | The browser AudioWorklet is still a scaffold |
 | OllaBridge [chat route](https://github.com/ruslanmv/ollabridge/blob/master/src/ollabridge/api/main.py), [avatar relay](https://github.com/ruslanmv/ollabridge/blob/master/src/ollabridge/api/avatar_session.py) | Local Ollama-compatible chat and existing authenticated avatar socket relay | No general SonicAgent STT/TTS API |
 | OllaBridge local [CloudBridgeManager](https://github.com/ruslanmv/ollabridge/blob/master/src/ollabridge/cloud/bridge_manager.py) | Persistent device-to-cloud relay with reconnect/capability advertisements | No SonicAgent voice capability or dispatch |
 | OllaBridge Cloud [RelayHub](https://github.com/ruslanmv/ollabridge-cloud/blob/master/src/ollabridge_cloud/services/relay_hub.py), [homepilot media pattern](https://github.com/ruslanmv/ollabridge-cloud/blob/master/src/ollabridge_cloud/api/homepilot_media_bridge.py) | User/device-scoped JSON request-response relay; a media endpoint already converts bounded bytes through base64 | Not a low-latency bidirectional **binary** audio relay; do not send continuous 20ms PCM as JSON RPC |
@@ -137,7 +137,7 @@ Done in SonicAgent. `POST /v1/audio/transcriptions` runs multilingual Tiny on CP
 
 ### P1 — batch Piper
 
-Done in SonicAgent. `POST /v1/audio/speech` returns a WAV for the `hp-piper-voices` mirror, including Companion and Secretary presets. Voice file hashes in the registry are still `TODO`. Phrase-pipelined realtime playback is still P2.
+Done in SonicAgent. `POST /v1/audio/speech` returns a WAV for the `hp-piper-voices` mirror, including Companion and Secretary presets. Voice file hashes are pinned. The realtime socket speaks phrases when Piper is ready. OllaBridge does not route that audio yet.
 
 ### P2 — realtime session services
 - Implement `sessions/manager.py`, `auth/*`, `api/websocket/endpoint.py`, `audio/*`, VAD, endpointing, STT turns, cancellation/turn IDs, a **single** LLM owner, TTS queueing, barge-in/echo guard, and proper cleanup.
