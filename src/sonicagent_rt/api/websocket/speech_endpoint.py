@@ -48,6 +48,7 @@ from sonicagent_rt.protocol.sequence import SequenceError, SequenceValidator
 from sonicagent_rt.speech_stream.chunks import iter_pcm16, split_frames
 from sonicagent_rt.speech_stream.store import MAX_TTS_QUEUE, SpeechStreamSession
 from sonicagent_rt.stt.errors import Cancelled, SpeechError
+from sonicagent_rt.tts.models import validate_voice_id, voice_record
 from sonicagent_rt.vad.factory import create_endpoint
 
 router = APIRouter()
@@ -181,7 +182,7 @@ class _Stream:
         self.stt = _Slot()
         self.tts = _Slot()
         self.stt_pending: deque[tuple[list[float], int | None]] = deque()
-        self.tts_pending: deque[tuple[str, str]] = deque()
+        self.tts_pending: deque[tuple[str, str, str]] = deque()
         # Client endpointing: the utterance being held until its commit.
         self.utterance: list[float] = []
         self.utterance_speech = False
@@ -236,6 +237,8 @@ class _Stream:
             await self._on_speak(event)
         elif kind == "playback.ack":
             self._on_ack(event)
+        elif kind == "tts.warm":
+            await self._on_warm(event)
         else:
             await self.emit(
                 {"type": "session.error", "code": "invalid_request", "message": "unsupported control event"}
@@ -293,9 +296,28 @@ class _Stream:
                 }
             )
             return
+        # HV9. A phrase may name its own voice (a preview, or Companion <-> Secretary without a
+        # new session). Only a registry voice; never a silent substitute for one that is not there.
+        voice = self.session.voice_id
+        if event.get("voice_id"):
+            voice = str(event.get("voice_id")).strip()
+            try:
+                validate_voice_id(voice)
+            except SpeechError:
+                voice = ""
+            if not voice or voice_record(voice) is None:
+                await self.emit(
+                    {
+                        "type": "session.error",
+                        "turn_id": turn_id,
+                        "code": "voice_unavailable",
+                        "message": "voice is not in the voice registry",
+                    }
+                )
+                return
         if self.tts.busy():
             if self.options.tts_queue and len(self.tts_pending) < MAX_TTS_QUEUE:
-                self.tts_pending.append((text, turn_id))
+                self.tts_pending.append((text, turn_id, voice))
                 await self.emit({"type": "tts.queued", "turn_id": turn_id, "position": len(self.tts_pending)})
                 return
             await self.emit(
@@ -307,23 +329,41 @@ class _Stream:
                 }
             )
             return
-        self._start_speech(text, turn_id)
+        self._start_speech(text, turn_id, voice)
 
-    def _start_speech(self, text: str, turn_id: str) -> None:
+    def _start_speech(self, text: str, turn_id: str, voice: str) -> None:
         cancellation, stop = self.tts.fresh()
-        self.tts.task = asyncio.create_task(self._speak_then_next(text, turn_id, cancellation, stop))
+        self.tts.task = asyncio.create_task(self._speak_then_next(text, turn_id, voice, cancellation, stop))
 
     async def _speak_then_next(
-        self, text: str, turn_id: str, cancellation: CancellationToken, stop: threading.Event
+        self, text: str, turn_id: str, voice: str, cancellation: CancellationToken, stop: threading.Event
     ) -> None:
-        await self._speak(text, turn_id, cancellation, stop)
+        await self._speak(text, turn_id, voice, cancellation, stop)
         if cancellation.cancelled or stop.is_set() or not self.tts_pending:
             return
-        next_text, next_turn = self.tts_pending.popleft()
+        next_text, next_turn, next_voice = self.tts_pending.popleft()
         # Started from inside the finishing task: the slot is handed straight
         # over, so no ``tts.speak`` arriving in between can jump the queue.
         cancellation, stop = self.tts.fresh()
-        self.tts.task = asyncio.create_task(self._speak_then_next(next_text, next_turn, cancellation, stop))
+        self.tts.task = asyncio.create_task(
+            self._speak_then_next(next_text, next_turn, next_voice, cancellation, stop)
+        )
+
+    async def _on_warm(self, event: dict[str, object]) -> None:
+        """HV9. Load the selected voice's model before her first sentence needs it."""
+        voice = str(event.get("voice_id") or self.session.voice_id).strip()
+        try:
+            validate_voice_id(voice)
+            if voice_record(voice) is None:
+                raise SpeechError("voice is not in the voice registry")
+            warm = getattr(self.websocket.app.state.tts, "warm", None)
+            if not callable(warm):
+                raise SpeechError("this speech engine cannot preload voices")
+            result = await asyncio.to_thread(warm, voice)
+        except SpeechError as exc:
+            await self.emit({"type": "session.error", "code": "voice_unavailable", "message": exc.message})
+            return
+        await self.emit({"type": "tts.warmed", **result})
 
     def _on_ack(self, event: dict[str, object]) -> None:
         if self.options.flow_control != "ack":
@@ -569,7 +609,7 @@ class _Stream:
     # ── Synthesis ────────────────────────────────────────────────────
 
     async def _speak(
-        self, text: str, turn_id: str, cancellation: CancellationToken, stop: threading.Event
+        self, text: str, turn_id: str, voice: str, cancellation: CancellationToken, stop: threading.Event
     ) -> None:
         settings = self.settings
         frame_ms = int(self.options.output_frame_ms)
@@ -579,12 +619,28 @@ class _Stream:
         sequence = 0
         sent_ms = 0.0
         self.current_tts = turn_id
-        await self.emit({"type": "tts.started", "turn_id": turn_id, "voice_id": self.session.voice_id})
+        synth_s = 0.0
+        engine = self.websocket.app.state.tts
+        is_loaded = getattr(engine, "is_loaded", None)
+        cold = None
+        if callable(is_loaded):
+            with contextlib.suppress(Exception):
+                cold = not is_loaded(voice)
+        record = voice_record(voice)
+        await self.emit(
+            {
+                "type": "tts.started",
+                "turn_id": turn_id,
+                "voice_id": voice,
+                "role": record.role if record else None,
+                "cold": cold,
+            }
+        )
         iterator = iter(
             iter_pcm16(
-                self.websocket.app.state.tts,
+                engine,
                 text,
-                voice=self.session.voice_id,
+                voice=voice,
                 language=self.session.language,
                 cancel=stop,
             )
@@ -600,7 +656,9 @@ class _Stream:
             while True:
                 if cancellation.cancelled or stop.is_set():
                     return
+                t_pull = time.perf_counter()
                 chunk = await asyncio.to_thread(pull)
+                synth_s += time.perf_counter() - t_pull
                 if chunk is None:
                     break
                 rate, pcm = chunk
@@ -673,6 +731,13 @@ class _Stream:
                 "tts_first_ms": first_ms,
                 "frames": sequence,
                 "audio_ms": round(sent_ms),
+                # HV9. Per voice and profile: time in synthesis (a cold load included, on the
+                # first sentence), its real-time factor, and whether the model was cold.
+                "voice_id": voice,
+                "role": record.role if record else None,
+                "cold": cold,
+                "synth_ms": round(synth_s * 1000, 1),
+                "rtf": round(synth_s * 1000 / sent_ms, 3) if sent_ms else None,
                 "llm": False,
             }
         )
