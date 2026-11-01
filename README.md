@@ -71,16 +71,15 @@ Batch speech and a realtime turn both run. Neither one is a headset service leve
 
 | Still open | State |
 | --- | --- |
-| Silero VAD | Not bundled. The running detector is energy endpointing. |
-| Browser AudioWorklet | Scaffold. Voice Studio is the page that listens and speaks. |
-| In-process telemetry | OpenTelemetry and Grafana files are templates. Turn metrics are events on the socket. |
-| OllaBridge, Quest, and a service level | Cloud does not route audio. No headset test is claimed. |
+| Silero file | Not bundled. Energy endpointing runs until `SONIC_VAD_MODEL_PATH` matches the pin in `src/sonicagent_rt/vad/silero_onnx.py`. |
+| Space image | The published Space stays on the previous image until it is redeployed. |
+| TLS, signing, OllaBridge, Quest | TLS is in front of the process. `scripts/export-sbom.sh` is unsigned. Cloud does not route audio. No headset test is claimed. |
 
 The published timing report is one Linux client calling Hugging Face CPU Basic. It is not a Quest, phone, or glasses result. Finish the security checklist before calling a deployment production.
 
 ## Direction
 
-A realtime turn accepts PCM frames, endpoints them, transcribes, streams text, and speaks phrases when Piper is ready. The browser AudioWorklet and Silero file are still not part of that path.
+A realtime turn accepts PCM frames, endpoints them, transcribes, streams text, and speaks a finished phrase before the rest of the reply when Piper is ready. `clients/web` resamples microphone audio, frames 20 ms PCM, and clears playback when the server sends `clear_audio`. Silero replaces energy endpointing only when the pinned file is present. `/metrics` records turn result, inflight turns, and stage seconds inside the process. OpenTelemetry export remains a template.
 
 - Sessions use a random resume token. `development-token` is rejected.
 - Energy endpointing, sequence checks, and barge-in cancellation run on the socket.
@@ -185,23 +184,20 @@ The root Compose file starts the API and web scaffold. The voice image, which ru
 docker compose -f hf/docker-compose.yml up --build
 ```
 
-That serves `http://127.0.0.1:8000` and is documented in [`hf/README.md`](hf/README.md). The Voice Studio is the page at `/`. Realtime WebSocket audio and Silero VAD are not on this path. GPU access, Redis, Prometheus, Grafana, and OpenTelemetry remain templates under `deploy/`.
+That serves `http://127.0.0.1:8000` and is documented in [`hf/README.md`](hf/README.md). The Voice Studio is the page at `/`. The realtime socket is `/v1/realtime/{id}` after `POST /v1/sessions`. Silero runs only when `SONIC_VAD_MODEL_PATH` points at the pinned ONNX file. Otherwise endpointing is energy-based. GPU access, Redis, Prometheus dashboards, and OpenTelemetry remain templates under `deploy/`.
 
 ## Remaining work
 
-Batch transcription, batch Piper, Voice Studio, the voice image, and one measured HTTP report are already in the tree. The realtime gateway is what remains:
+Batch speech, Voice Studio, the voice image, the measured HTTP report, and a realtime turn are in the tree. Still outside a service level:
 
-1. **Protocol and sessions** — finalize JSON events, binary header, authentication, reconnect, sequence validation, queue limits, and golden fixtures.
-2. **Browser media** — complete AudioWorklet capture/playback, resampling, echo handling, playback timestamps, and backpressure.
-3. **VAD and endpointing** — integrate Silero ONNX, pre-roll, speech start/stop events, and noisy-room tests.
-4. **LLM streaming** — implement OpenAI-compatible and Ollama clients with deadlines, retries, cancellation, and redacted telemetry.
-5. **Phrase-pipelined playback and barge-in** — speak the first phrase before the full reply exists, then cancel that turn and clear queued audio.
-6. **Per-stage telemetry** — measure VAD, endpointing, LLM time to first token, first audio, cancellation, and concurrency inside the process.
-7. **Security and operations** — threat model, rate limiting, session isolation, secret handling, SBOM, signing, runbooks, and load testing.
+- Put the pinned Silero file on disk if you want that detector. The pin is in `src/sonicagent_rt/vad/silero_onnx.py`.
+- Terminate TLS in front of the process. `scripts/export-sbom.sh` writes a CycloneDX file when the tool is installed. Release signing is not wired.
+- OllaBridge does not route audio. No headset run is claimed.
+- The browser client at `clients/web` captures, resamples, and plays PCM. Voice Studio remains the page on the Space.
 
 ## API overview
 
-The speech routes are `POST /v1/audio/transcriptions` and `POST /v1/audio/speech`. They require a bearer token. The session and WebSocket sections below are the realtime design. `POST /v1/sessions` still returns a development token and does not start a voice turn.
+The speech routes are `POST /v1/audio/transcriptions` and `POST /v1/audio/speech`. They require a bearer token. `POST /v1/sessions` requires the same token and returns a random resume token for `/v1/realtime/{session_id}`. The example below shows the field names. It is not a live response.
 
 ### Create a session
 
@@ -233,7 +229,7 @@ Example response:
 ```json
 {
   "session_id": "ses_example",
-  "resume_token": "development-token",
+  "resume_token": "example-resume-token",
   "websocket_url": "/v1/realtime/ses_example",
   "expires_at": "2026-07-10T18:00:00Z",
   "server_capabilities": {

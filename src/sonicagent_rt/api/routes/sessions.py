@@ -1,5 +1,6 @@
 """Create a short-lived realtime session. The resume token is the websocket credential."""
 
+import hashlib
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Request
@@ -30,8 +31,10 @@ async def create_session(body: SessionCreate, request: Request) -> dict[str, obj
     settings = request.app.state.settings
     if not settings.voice_enabled:
         raise VoiceDisabled("voice endpoints are disabled")
-    require_api_key(request.headers.get("authorization"), settings)
+    token = require_api_key(request.headers.get("authorization"), settings)
     enforce_origin(request.headers.get("origin"), settings)
+    key = hashlib.sha256(token.encode("utf-8")).hexdigest()[:16]
+    request.app.state.rate_limiter.check(key)
     session = request.app.state.sessions.create(language=body.language, voice_id=body.voice_id)
     tts = request.app.state.tts.describe()
     expires = datetime.now(timezone.utc) + timedelta(seconds=settings.session_ttl_sec)

@@ -24,6 +24,6 @@ session. The backend returns a session ID, a resume token, and the WebSocket URL
 
 ## Current status
 
-`/v1/sessions` is still a development session scaffold. Do not treat its token as a speech credential.
+`POST /v1/sessions` requires the same bearer token as the audio routes and returns a random resume token. `development-token` is rejected. One live socket may hold that token. Do not put the token in a browser build or a log.
 
 `/v1/audio/transcriptions` requires `SONIC_API_KEY`. `/health/live` can return 200 while `/health/ready` is false. Field details, error codes, and the local and Space deploy steps are in `hf/README.md` and [Speech recognition](../speech-recognition.md).

@@ -1,6 +1,6 @@
 # Speech recognition
 
-Batch speech-to-text is implemented with `faster-whisper` and CTranslate2. Realtime WebSocket transcription is not implemented.
+Batch speech-to-text is implemented with `faster-whisper` and CTranslate2. The realtime socket transcribes one endpointed utterance and sends `transcript.final`. It does not stream partial hypotheses.
 
 ## What runs
 

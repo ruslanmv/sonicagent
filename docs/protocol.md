@@ -30,7 +30,7 @@ Example response:
 ```json
 {
   "session_id": "ses_example",
-  "resume_token": "development-token",
+  "resume_token": "example-resume-token",
   "websocket_url": "/v1/realtime/ses_example",
   "expires_at": "2026-07-10T18:00:00Z",
   "server_capabilities": {
@@ -83,7 +83,7 @@ Server events:
 
 ## Binary audio frame v1
 
-The scaffold reserves a 24-byte big-endian header:
+Binary audio uses a 24-byte big-endian header. The golden fixture is `tests/golden/protocol/binary-frame-v1.hex`.
 
 | Offset | Size | Field |
 |---:|---:|---|
