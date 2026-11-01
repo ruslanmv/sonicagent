@@ -188,9 +188,18 @@ class _Stream:
         self.max_utterance_samples = int(
             min(settings.vad_max_utterance_sec, settings.max_audio_seconds) * settings.input_sample_rate
         )
-        # flow_control: ack — milliseconds played, per turn, as reported.
-        self.played_ms: dict[str, float] = {}
-        self.played_at: dict[str, float] = {}
+        # Audio sent and not yet played, for the WHOLE session — not per phrase. With the queue,
+        # phrases follow each other into one playback buffer on the client, so a per-phrase
+        # budget let a headset hold ~2 s of unplayed audio *per queued phrase* (measured end to
+        # end: 6 s of speech delivered in 2.2 s against a 2 s budget).
+        #  - flow_control none: a virtual playout clock — when the last sent sample will have
+        #    played if the client plays continuously from now on.
+        #  - flow_control ack:  per phrase [sent_ms, played_ms], summed; a phrase leaves the
+        #    table once the client reports it fully played.
+        self.playout_end = 0.0
+        self.unplayed: dict[str, list[float]] = {}
+        self.last_ack_at: float | None = None
+        self.current_tts: str | None = None
 
     # ── Control events ───────────────────────────────────────────────
 
@@ -249,6 +258,7 @@ class _Stream:
         if target in ("all", "tts"):
             self.tts.cancel()
             self.tts_pending.clear()
+            self._forget_playback()
         if target in ("all", "stt"):
             self.stt.cancel()
             self.stt_pending.clear()
@@ -307,8 +317,6 @@ class _Stream:
         self, text: str, turn_id: str, cancellation: CancellationToken, stop: threading.Event
     ) -> None:
         await self._speak(text, turn_id, cancellation, stop)
-        self.played_ms.pop(turn_id, None)
-        self.played_at.pop(turn_id, None)
         if cancellation.cancelled or stop.is_set() or not self.tts_pending:
             return
         next_text, next_turn = self.tts_pending.popleft()
@@ -325,9 +333,40 @@ class _Stream:
             played = float(event.get("played_ms"))  # type: ignore[arg-type]
         except (TypeError, ValueError):
             return
-        if turn_id and played >= self.played_ms.get(turn_id, 0.0):
-            self.played_ms[turn_id] = played
-            self.played_at[turn_id] = time.monotonic()
+        entry = self.unplayed.get(turn_id)
+        if entry is None:
+            return
+        if played >= entry[1]:
+            entry[1] = played
+            self.last_ack_at = time.monotonic()
+        if played > 0:
+            # Playback is sequential: a phrase that has started playing means every phrase
+            # sent before it has finished. Without this, a client that acknowledges only the
+            # phrase it is receiving leaves the previous phrase's tail in the budget forever.
+            for earlier in list(self.unplayed):
+                if earlier == turn_id:
+                    break
+                self.unplayed.pop(earlier, None)
+        # Fully played and no longer being sent: it no longer holds any of the budget.
+        if entry[1] >= entry[0] and not (self.tts.busy() and self.current_tts == turn_id):
+            self.unplayed.pop(turn_id, None)
+
+    def _ahead_ms(self) -> float:
+        """Audio handed to the client and not yet played, across every phrase."""
+        if self.options.flow_control == "ack":
+            return sum(max(0.0, sent - played) for sent, played in self.unplayed.values())
+        return max(0.0, (self.playout_end - time.monotonic()) * 1000.0)
+
+    def _note_sent(self, turn_id: str, ms: float) -> None:
+        if self.options.flow_control == "ack":
+            self.unplayed.setdefault(turn_id, [0.0, 0.0])[0] += ms
+        else:
+            self.playout_end = max(self.playout_end, time.monotonic()) + ms / 1000.0
+
+    def _forget_playback(self) -> None:
+        """The client cleared its audio (a tts cancel): nothing it held is waiting any more."""
+        self.unplayed.clear()
+        self.playout_end = 0.0
 
     # ── Microphone audio ─────────────────────────────────────────────
 
@@ -537,9 +576,9 @@ class _Stream:
         limit_ms = settings.max_outbound_queue_ms
         started = time.perf_counter()
         first_ms: float | None = None
-        first_sent_at: float | None = None
         sequence = 0
         sent_ms = 0.0
+        self.current_tts = turn_id
         await self.emit({"type": "tts.started", "turn_id": turn_id, "voice_id": self.session.voice_id})
         iterator = iter(
             iter_pcm16(
@@ -556,14 +595,6 @@ class _Stream:
                 return next(iterator)
             except StopIteration:
                 return None
-
-        def ahead_ms() -> float:
-            """Audio handed to the client and not yet played."""
-            if self.options.flow_control == "ack":
-                return sent_ms - self.played_ms.get(turn_id, 0.0)
-            if first_sent_at is None:
-                return 0.0
-            return sent_ms - (time.monotonic() - first_sent_at) * 1000.0
 
         try:
             while True:
@@ -592,7 +623,7 @@ class _Stream:
                         # A zero budget cannot hold even one frame: refuse, as v1 did.
                         await self._refuse_queue(turn_id, cancellation, stop, "outbound audio queue is full")
                         return
-                    if not await self._wait_for_room(turn_id, ahead_ms, limit_ms, cancellation, stop):
+                    if not await self._wait_for_room(turn_id, limit_ms, cancellation, stop):
                         return
                     timestamp = sequence * frame_ms * 1000
                     if self.options.chunk_events == "all":
@@ -619,9 +650,9 @@ class _Stream:
                             )
                         )
                     )
-                    if first_sent_at is None:
-                        first_sent_at = time.monotonic()
-                    sent_ms += len(piece) / 2 / rate * 1000.0
+                    piece_ms = len(piece) / 2 / rate * 1000.0
+                    sent_ms += piece_ms
+                    self._note_sent(turn_id, piece_ms)
                     sequence += 1
         except Cancelled:
             return
@@ -649,7 +680,6 @@ class _Stream:
     async def _wait_for_room(
         self,
         turn_id: str,
-        ahead_ms: Callable[[], float],
         limit_ms: int,
         cancellation: CancellationToken,
         stop: threading.Event,
@@ -661,11 +691,11 @@ class _Stream:
         acknowledging for ``_ACK_STALL_SEC`` is treated as gone.
         """
         waiting_since = time.monotonic()
-        while ahead_ms() >= limit_ms:
+        while self._ahead_ms() >= limit_ms:
             if cancellation.cancelled or stop.is_set():
                 return False
             if self.options.flow_control == "ack":
-                last = self.played_at.get(turn_id, waiting_since)
+                last = self.last_ack_at or waiting_since
                 if time.monotonic() - max(last, waiting_since) > _ACK_STALL_SEC:
                     await self._refuse_queue(
                         turn_id, cancellation, stop, "client stopped acknowledging playback"

@@ -86,6 +86,28 @@ def test_a_reply_longer_than_the_queue_limit_is_paced_not_cut() -> None:
     assert elapsed >= 0.6 - 0.1 - 0.15
 
 
+def test_queued_phrases_share_one_budget_not_one_each() -> None:
+    # Found end to end (Avatar → OllaBridge → SonicAgent): with a per-phrase budget, a headset
+    # held ~2 s of unplayed audio per QUEUED phrase. The budget is the session's: two 300 ms
+    # phrases against 100 ms ahead take at least ~500 ms of wall clock to send.
+    app = _app(max_outbound_queue_ms=100)
+    app.state.tts = LongTts(0.3)
+    with TestClient(app) as client:
+        created = _create(client, mode="tts_only", stream_options={"tts_queue": True}).json()
+        with client.websocket_connect(_url(created)) as socket:
+            socket.receive_json()
+            started = time.monotonic()
+            socket.send_text(json.dumps({"type": "tts.speak", "text": "One.", "turn_id": "a"}))
+            socket.send_text(json.dumps({"type": "tts.speak", "text": "Two.", "turn_id": "b"}))
+            done = 0
+            while done < 2:
+                message = socket.receive()
+                if message.get("text") and json.loads(message["text"])["type"] == "tts.audio.done":
+                    done += 1
+            elapsed = time.monotonic() - started
+    assert elapsed >= 0.6 - 0.1 - 0.12
+
+
 def test_ack_flow_control_waits_for_playback_then_finishes() -> None:
     app = _app(max_outbound_queue_ms=100)
     app.state.tts = LongTts(0.4)

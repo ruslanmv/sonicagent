@@ -69,7 +69,7 @@ Piper's sentence iterator yields one PCM16 buffer per sentence. The socket sends
 
 `turn.cancelled` includes `clear_audio: true`.
 
-`SONIC_MAX_OUTBOUND_QUEUE_MS` bounds audio sent and **not yet played**. When the client is that far ahead, the server waits before sending the next frame; it does not end the turn. Without acknowledgements, "played" is estimated as wall-clock time since the first frame. Before HV3 the counter added every frame ever sent and never subtracted, so with the default 2000 ms every reply longer than two seconds ended in `rate_limited` ("outbound audio queue is full") after exactly 100 frames. A value of `0` still refuses at once, as it always did.
+`SONIC_MAX_OUTBOUND_QUEUE_MS` bounds audio sent and **not yet played**, for the whole session — queued phrases share one budget, because they share one playback buffer on the client. When the client is that far ahead, the server waits before sending the next frame; it does not end the turn. Without acknowledgements, "played" is estimated as wall-clock time since the first frame. Before HV3 the counter added every frame ever sent and never subtracted, so with the default 2000 ms every reply longer than two seconds ended in `rate_limited` ("outbound audio queue is full") after exactly 100 frames. A value of `0` still refuses at once, as it always did.
 
 ## Negotiated options (HV3)
 
@@ -79,7 +79,7 @@ Piper's sentence iterator yields one PCM16 buffer per sentence. The socket sends
 | --- | --- | --- |
 | `chunk_events` | `all`, `none` | `none` drops the JSON `tts.audio.chunk` before each binary frame. The 24-byte header already carries sequence, rate and timestamp, and a session speaks one phrase at a time, so frames between `tts.audio.meta` and `tts.audio.done` belong to that `turn_id`. |
 | `output_frame_ms` | `20`, `40` | Length of each output frame. `tts.audio.meta` carries `frame_ms`. |
-| `flow_control` | `none`, `ack` | `ack`: the client sends `{"type":"playback.ack","turn_id","played_ms"}` and the server keeps at most `SONIC_MAX_OUTBOUND_QUEUE_MS` of unplayed audio in flight. If playback does not move for 10 s the turn ends with `rate_limited` ("client stopped acknowledging playback"). |
+| `flow_control` | `none`, `ack` | `ack`: the client sends `{"type":"playback.ack","turn_id","played_ms"}` for every phrase it still holds audio for, and the server keeps at most `SONIC_MAX_OUTBOUND_QUEUE_MS` of unplayed audio in flight **across all phrases of the session**. Playback is sequential, so an ack with `played_ms > 0` for a phrase also marks every earlier phrase as fully played. If playback does not move for 10 s the turn ends with `rate_limited` ("client stopped acknowledging playback"). |
 | `endpointing` | `server`, `client` | `client`: the VAD only reports `speech.started`; audio is held until the end-of-utterance flag and transcribed once. Each commit produces exactly one `transcript.final`, carrying the `commit_seq` of the committing frame, with `text: ""` and `no_speech: true` when nothing was held. A commit that arrives while another is transcribing waits (up to two), instead of being refused. |
 | `tts_queue` | `false`, `true` | `true`: `tts.speak` while a phrase is playing is queued (`tts.queued`, up to 16) and spoken in order, each with its own `tts.audio.done`. A cancel clears the queue. |
 
