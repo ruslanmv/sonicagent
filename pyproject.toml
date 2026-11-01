@@ -53,7 +53,10 @@ where = ["src"]
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"
 testpaths = ["tests"]
-pythonpath = ["src"]
+# src holds sonicagent_rt. "." is the repo root so tests can import the
+# benchmarks package. CI invokes the pytest console script, which does not
+# put the working directory on sys.path.
+pythonpath = ["src", "."]
 markers = ["integration: integration tests", "e2e: end-to-end tests", "performance: performance tests"]
 
 [tool.ruff]
