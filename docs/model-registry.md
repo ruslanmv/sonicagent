@@ -1,6 +1,6 @@
 ## Model registry
 
-Neural model binaries are not stored in Git. The registry contains metadata, paths, checksums, licenses, and attribution.
+Neural model binaries are not stored in Git. The registry contains metadata, paths, checksums, licenses, and attribution. The readable classification of every voice is [`catalog/README.md`](../catalog/README.md).
 
 Default voice mirror base:
 

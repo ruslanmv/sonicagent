@@ -76,6 +76,50 @@ def registry_voice_ids(registry_path: Path | None = None) -> set[str]:
     return {record.id for record in registry_voices(registry_path)}
 
 
+def voice_catalog(registry_path: Path | None = None) -> dict[str, object]:
+    """Public voice library. Paths are mirror paths, not local cache files."""
+    path = registry_path or _default_registry()
+    payload: dict[str, object] = {}
+    if path is not None and path.is_file():
+        try:
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            loaded = {}
+        if isinstance(loaded, dict):
+            payload = loaded
+    styles = payload.get("styles") if isinstance(payload.get("styles"), dict) else dict(_DEFAULT_STYLES)
+    records = registry_voices(path)
+    model_paths = {record.model_path for record in records}
+    voices = [
+        {
+            "id": record.id,
+            "display_name": record.display_name,
+            "role": record.role,
+            "gender": record.gender,
+            "language": record.language,
+            "locale": record.locale,
+            "language_label": record.language_label,
+            "quality": record.quality,
+            "speaker_id": record.speaker_id,
+            "length_scale": record.length_scale,
+            "noise_scale": record.noise_scale,
+            "noise_w_scale": record.noise_w_scale,
+            "license": record.license,
+            "model_path": record.model_path,
+        }
+        for record in records
+    ]
+    return {
+        "status": "ready" if voices else "empty",
+        "source": "ruslanmv/hp-piper-voices",
+        "registry": "model_registry/voices.json",
+        "voice_count": len(voices),
+        "model_file_count": len(model_paths),
+        "styles": styles,
+        "voices": voices,
+    }
+
+
 def voice_record(voice_id: str, registry_path: Path | None = None) -> VoiceRecord | None:
     for record in registry_voices(registry_path):
         if record.id == voice_id:
