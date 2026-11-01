@@ -1,6 +1,6 @@
 # Production status
 
-SonicAgent serves batch speech and an authenticated realtime turn. The Hugging Face Space is not a service level, and this repository does not claim a Quest result.
+SonicAgent serves batch speech, an authenticated full-turn socket, and a speech-only stream. The Hugging Face Space is not a service level. One Quest 3 browser measurement of on-device Whisper Tiny is recorded. It is not a remote-streaming result.
 
 ## What runs
 
@@ -13,7 +13,8 @@ SonicAgent serves batch speech and an authenticated realtime turn. The Hugging F
 | Privacy defaults | Audio and transcripts are not stored. Transcript text is not a log field. |
 | Hosts | `hf/` image for a local PC, and the same image on the existing Space. CPU Basic can sleep. |
 | Measurements | One client-observed HTTP pass is in `benchmarks/reports/hf-cpu-basic-endpoint-capability.md`. |
-| Realtime turn | Bearer-authenticated `POST /v1/sessions`, then one live socket on `/v1/realtime/{id}`. Reconnect after close. Energy endpointing, barge-in, phrase audio when Piper is ready, and OpenAI-compatible or Ollama text when configured. |
+| Realtime turn | Bearer-authenticated `POST /v1/sessions`, then one live socket on `/v1/realtime/{id}`. Reconnect after close. Energy endpointing, barge-in, phrase audio when Piper is ready, and OpenAI-compatible or Ollama text when configured. This path runs SonicAgent's language model. |
+| Speech-only stream | `POST /v1/audio/stream-sessions`, then `/v1/audio/stream/{id}`. Modes `stt_only`, `tts_only`, and `duplex_speech`. faster-whisper is endpointed, so `partial_results` is false and `transcript.partial` is not sent. Piper yields PCM16 per sentence. The service credential is not put in the socket URL. |
 | Browser media | `clients/web` resamples, frames PCM, bounds the playback queue, and drops queued audio on `clear_audio`. Voice Studio remains the batch page on the Space. |
 | Process metrics | `/metrics` counts realtime turns, inflight turns, and VAD-to-audio stage seconds. Labels do not contain transcript text. |
 | Voice checksums | Every `voices.json` entry has a sha256 for the ONNX file and its config. Whisper Tiny stays pinned separately. |
@@ -24,7 +25,8 @@ SonicAgent serves batch speech and an authenticated realtime turn. The Hugging F
 | --- | --- |
 | Silero file | No Silero file is bundled. Energy endpointing is the detector that runs until the pinned ONNX file is on disk. |
 | Default language model | `SONIC_LLM_PROVIDER` defaults to `mock`. Set `ollama` or `openai-compatible` and `SONIC_LLM_BASE_URL` for a real model. |
-| OllaBridge and Quest | Cloud does not route audio yet. No physical headset test is claimed. |
+| OllaBridge | Cloud does not route audio yet. The speech-only socket is not a relay. |
+| Headset streaming | One Quest 3 browser-2d run of local Whisper Tiny is in `benchmarks/reports/quest3-browser-2d-local-whisper-tiny.md` (stop to transcript 8538 ms, RTF 2.02, warm Tiny, 1 November 2026 10:17 Europe/Rome). Headset TTS was not measured. Immersive VR and mixed reality were not measured. Moonshine, Nemotron, and Pocket TTS are not installed. |
 | Always-on hosting | TLS in front of your own machine is an operator step. The SBOM script does not sign a release. CPU Basic can sleep. |
 
 ## What is safe to do now
@@ -36,7 +38,7 @@ SonicAgent serves batch speech and an authenticated realtime turn. The Hugging F
 
 ## What not to do
 
-- Do not describe the Space as always on, on-device, or a Quest latency result.
+- Do not describe the Space as always on or on-device. Do not quote the Quest 3 Whisper Tiny run as the latency of this service.
 - Do not put `SONIC_API_KEY` or a resume token in a browser build, a public README, or an access log.
 - Do not commit model binaries, private audio, transcripts, local caches, or secrets.
 - Do not treat `/health/live` as model readiness.

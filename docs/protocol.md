@@ -47,11 +47,17 @@ Example response:
 }
 ```
 
+### Speech-only WebSocket
+
+`POST /v1/audio/stream-sessions` creates a session that does not call the language model. The socket is `/v1/audio/stream/{session_id}?resume_token=...`. Protocol `sonic-speech-stream-v1`. faster-whisper on this socket is endpointed, so partial transcripts are not sent. Piper output is one PCM16 buffer per sentence. Field list: [Speech-only stream](api/speech-stream.md).
+
 ### WebSocket
 
 ```text
 /v1/realtime/{session_id}?resume_token=...
 ```
+
+This socket is the full turn. It can call the language model. A client that already owns the conversation uses the speech-only socket above.
 
 Client control events:
 

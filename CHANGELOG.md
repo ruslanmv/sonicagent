@@ -5,6 +5,7 @@ All notable changes will be documented here.
 ## [Unreleased]
 
 ### Added
+- Speech-only stream at `POST /v1/audio/stream-sessions` and `WS /v1/audio/stream/{session_id}`. It transcribes with endpointed faster-whisper and speaks Piper sentence by sentence. It does not call the language model and it does not emit partial transcripts.
 - Batch speech to text with faster-whisper Tiny on CPU, for English, Spanish, French, German, Italian, and Portuguese.
 - Batch Piper speech for the `hp-piper-voices` mirror, including Companion and Secretary presets.
 - Voice Studio on the `hf/` image and the Hugging Face Space `ruslanmv/SonicAgent`.
@@ -16,4 +17,4 @@ All notable changes will be documented here.
 
 ### Still open
 - The Silero ONNX file is not bundled. The default language model is still the local mock.
-- Release signing, an OllaBridge audio route, and a headset measurement.
+- Release signing and an OllaBridge audio route. Moonshine, Nemotron, and Pocket TTS are not installed. One Quest 3 browser measurement covers local Whisper Tiny only.

@@ -15,6 +15,7 @@ import threading
 import wave
 from pathlib import Path
 
+from sonicagent_rt.audio.pcm import floats_to_pcm16
 from sonicagent_rt.config import Settings
 from sonicagent_rt.stt.errors import Cancelled, InferenceFailed, InvalidRequest, TextTooLong, VoiceUnavailable
 from sonicagent_rt.tts.base import SynthesizedSpeech, TtsStatus
@@ -77,6 +78,37 @@ class PiperSynthesizer:
         if not wav.startswith(b"RIFF") or b"WAVE" not in wav[:16]:
             raise InferenceFailed("synthesis did not produce WAV audio")
         return SynthesizedSpeech(wav=wav, voice=voice_id, sample_rate=_wav_rate(wav))
+
+    def iter_pcm(self, text: str, *, voice: str, language: str | None, cancel: object):
+        """Yield one PCM16 buffer per Piper sentence. Later sentences are not synthesized first."""
+        del language
+        if not self._settings.tts_enabled:
+            raise VoiceUnavailable("speech synthesis is disabled")
+        cleaned = text.strip()
+        if not cleaned:
+            raise InvalidRequest("text is empty")
+        if len(cleaned) > self._settings.tts_max_chars:
+            raise TextTooLong("text is longer than the configured maximum")
+        if _cancelled(cancel):
+            raise Cancelled("synthesis was cancelled")
+        voice_id = voice.strip() or self._settings.tts_voice
+        validate_voice_id(voice_id)
+        record = voice_record(voice_id)
+        if record is None:
+            raise VoiceUnavailable("voice is not in the local voice registry")
+        engine = self._voice(voice_id)
+        method = getattr(engine, "synthesize", None)
+        if not callable(method):
+            speech = self.synthesize(cleaned, voice=voice_id, language=None, cancel=cancel)
+            yield speech.sample_rate, _wav_pcm(speech.wav)
+            return
+        for chunk in method(cleaned, syn_config=_synthesis_config(record)):
+            if _cancelled(cancel):
+                raise Cancelled("synthesis was cancelled")
+            audio = getattr(chunk, "audio_float_array", None)
+            if audio is None:
+                continue
+            yield int(chunk.sample_rate), _float_array_to_pcm16(audio)
 
     def _installed_voice_ids(self) -> set[str]:
         directory = self._model_dir()
@@ -189,3 +221,13 @@ def _wav_rate(payload: bytes) -> int:
 def _cancelled(cancel: object) -> bool:
     is_set = getattr(cancel, "is_set", None)
     return bool(is_set()) if callable(is_set) else False
+
+
+def _wav_pcm(payload: bytes) -> bytes:
+    with wave.open(io.BytesIO(payload), "rb") as handle:
+        return handle.readframes(handle.getnframes())
+
+
+def _float_array_to_pcm16(audio: object) -> bytes:
+    samples = [float(sample) for sample in audio]  # type: ignore[arg-type]
+    return floats_to_pcm16(samples)

@@ -20,3 +20,5 @@ make benchmark-endpoints
 
 The command writes `benchmarks/results/endpoints.json`. The published pass is [`benchmarks/reports/hf-cpu-basic-endpoint-capability.md`](../benchmarks/reports/hf-cpu-basic-endpoint-capability.md). Read [`benchmarks/README.md`](../benchmarks/README.md) before quoting a figure. That pass is batch HTTP from a Linux client. It does not time the realtime socket.
 
+One Quest 3 browser-2d run of local Whisper Tiny is recorded in [`benchmarks/reports/quest3-browser-2d-local-whisper-tiny.md`](../benchmarks/reports/quest3-browser-2d-local-whisper-tiny.md). It is a single headset measurement of on-device Tiny, not a p50, and it does not measure TTS, immersive VR, or mixed reality.
+

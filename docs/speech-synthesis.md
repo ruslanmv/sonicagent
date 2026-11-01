@@ -1,6 +1,6 @@
 # Speech synthesis
 
-Batch text-to-speech is implemented with Piper. The realtime turn speaks a finished phrase as PCM frames before the rest of the reply when Piper is ready. A cancelled turn sets `clear_audio` so the client drops queued playback.
+Batch text-to-speech is implemented with Piper. The full-turn socket speaks a finished phrase as PCM frames before the rest of the reply when Piper is ready. The speech-only socket calls Piper's sentence iterator and sends each sentence's PCM16 before the next sentence is synthesized. That is sentence audio, not sample-by-sample or token-by-token audio. A cancelled turn sets `clear_audio` so the client drops queued playback. Pocket TTS is not installed.
 
 ## What runs
 

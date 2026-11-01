@@ -102,6 +102,51 @@ async def capabilities(request: Request, _: None = Depends(require_audio_access)
         },
         "tts": tts.as_dict(),
         "realtime": realtime_status(settings, stt),
+        "streaming": {
+            "available": True,
+            "protocol": "sonic-speech-stream-v1",
+            "input_codecs": ["pcm_s16le"],
+            "frame_ms": [20, 40],
+            "modes": ["stt_only", "tts_only", "duplex_speech"],
+            "partial_results": False,
+            "llm": False,
+        },
+        "stt_providers": [
+            {
+                "id": "faster-whisper",
+                "languages": settings.parsed_stt_languages(),
+                "ready": bool(stt.ready),
+                "streaming_mode": "endpointed",
+                "partial_results": False,
+            },
+            {
+                "id": "moonshine-streaming",
+                "languages": ["en"],
+                "ready": False,
+                "streaming_mode": "incremental",
+                "reason": "not-installed",
+            },
+            {
+                "id": "nemotron-stream",
+                "languages": ["en", "it"],
+                "ready": False,
+                "streaming_mode": "incremental",
+                "reason": "not-installed",
+            },
+        ],
+        "tts_providers": [
+            {
+                "id": "piper",
+                "ready": bool(tts.ready),
+                "streaming_audio": True,
+                "incremental": "sentence",
+            },
+            {
+                "id": "pocket-tts-stream",
+                "ready": False,
+                "reason": "not-installed",
+            },
+        ],
         "route": {"location": "sonicagent"},
     }
 

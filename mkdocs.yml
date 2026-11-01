@@ -45,5 +45,6 @@ nav:
       - REST API: api/rest-api.md
       - Errors: api/errors.md
       - WebSocket events: api/websocket-events.md
+      - Speech-only stream: api/speech-stream.md
       - Model registry: model-registry.md
       - Roadmap: roadmap.md

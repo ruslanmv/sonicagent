@@ -13,9 +13,10 @@ creation, model/voice information, and metrics.
 | `GET /v1/voices` | Lists known voices. |
 | `GET /v1/models/stt` | Lists known speech-to-text models. |
 | `GET /metrics` | Prometheus-style metrics. |
-| `GET /v1/audio/capabilities` | Bearer token. Reports STT and TTS readiness. |
+| `GET /v1/audio/capabilities` | Bearer token. Reports STT, TTS, the full-turn socket, and the speech-only stream. |
 | `POST /v1/audio/transcriptions` | Bearer token. Multipart audio in, JSON transcript out. |
 | `POST /v1/audio/speech` | Bearer token. Optional Piper WAV. Returns 503 when TTS is not installed. |
+| `POST /v1/audio/stream-sessions` | Bearer token. Speech-only session. Returns a resume token, not the API key. |
 
 ## Session creation in plain language
 
