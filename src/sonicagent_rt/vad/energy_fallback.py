@@ -26,6 +26,7 @@ class EnergyEndpoint:
         pre_roll_ms: int,
         max_utterance_sec: float,
         sample_rate: int,
+        scorer: object | None = None,
     ) -> None:
         if sample_rate <= 0:
             raise ValueError("sample_rate must be positive")
@@ -34,6 +35,7 @@ class EnergyEndpoint:
         self.min_silence_ms = min_silence_ms
         self.max_samples = max(1, int(max_utterance_sec * sample_rate))
         self.sample_rate = sample_rate
+        self._score = scorer or _rms
         self._pre_roll: deque[float] = deque(maxlen=max(1, int(pre_roll_ms * sample_rate / 1000)))
         self._pending: list[float] = []
         self._speech_ms = 0.0
@@ -46,8 +48,8 @@ class EnergyEndpoint:
         if not samples:
             return events
         duration_ms = len(samples) * 1000 / self.sample_rate
-        rms = _rms(samples)
-        if rms >= self.threshold:
+        score = float(self._score(samples))  # type: ignore[operator]
+        if score >= self.threshold:
             self._speech_ms += duration_ms
             self._silence_ms = 0.0
             self._pending.extend(samples)

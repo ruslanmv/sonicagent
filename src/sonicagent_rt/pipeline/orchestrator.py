@@ -29,6 +29,7 @@ async def run_turn(
     settings: Settings,
     cancellation: CancellationToken,
     turn_id: str,
+    speech_ms: float = 0.0,
 ) -> AsyncIterator[dict[str, object] | bytes]:
     """Yield JSON events and encoded PCM output frames. Events contain no secrets."""
     started = time.perf_counter()
@@ -118,6 +119,7 @@ async def run_turn(
         yield {
             "type": "metrics.turn",
             "turn_id": turn_id,
+            "speech_ms": round(speech_ms, 1),
             "stt_ms": timings["stt_ms"],
             "llm_first_ms": timings["llm_first_ms"],
             "tts_first_ms": timings["tts_first_ms"],
@@ -133,10 +135,11 @@ async def run_turn(
 
 
 def _ready_phrases(buffer: str, max_chars: int) -> tuple[list[str], str]:
-    parts = segment_text(buffer, max_chars=max_chars)
+    normalized = " ".join(buffer.split())
+    parts = segment_text(normalized, max_chars=max_chars)
     if not parts:
         return [], ""
-    if buffer[-1:] not in ".!?;:":
+    if normalized[-1:] not in ".!?;:":
         return parts[:-1], parts[-1]
     return parts, ""
 
@@ -195,7 +198,7 @@ async def _speak(
 
 
 def _cancelled(turn_id: str) -> dict[str, object]:
-    return {"type": "response.cancelled", "turn_id": turn_id, "reason": "cancelled"}
+    return {"type": "response.cancelled", "turn_id": turn_id, "reason": "cancelled", "clear_audio": True}
 
 
 def _elapsed(started: float) -> float:

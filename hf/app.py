@@ -37,8 +37,18 @@ def _prefer_route(path: str) -> None:
     app.router.routes[:] = [*chosen, *rest]
 
 
+class NoCacheStaticFiles(StaticFiles):
+    """Browser copies of the studio script must not outlive a Space rebuild."""
+
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
+
+
 if UI_DIR.is_dir():
-    app.mount("/ui-assets", StaticFiles(directory=UI_DIR), name="voice-studio-assets")
+    app.mount("/ui-assets", NoCacheStaticFiles(directory=UI_DIR), name="voice-studio-assets")
 
     @app.get("/", include_in_schema=False)
     async def voice_studio():

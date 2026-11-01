@@ -12,3 +12,5 @@ class SpeechSession:
     language: str
     voice_id: str
     expires_at: float
+    held: bool = False
+    connects: int = 0

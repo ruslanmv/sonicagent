@@ -9,7 +9,7 @@ The running conversation is batch:
 3. `POST /v1/audio/speech` returns a WAV for a voice in the selected language.
 4. Voice Studio plays that WAV from the voice card.
 
-A streaming call (small PCM frames, voice activity detection, a live language model, and audio that starts before the sentence is finished) is the later design. It is not what the server does today.
+Voice Studio still records, then transcribes, then plays a WAV. A separate realtime socket accepts 20 ms PCM frames, endpoints them, and can speak the first finished phrase before the reply is complete. That socket uses a resume token. The default language model is a local mock until you set `SONIC_LLM_PROVIDER`.
 
 ## Words
 
@@ -24,4 +24,4 @@ A streaming call (small PCM frames, voice activity detection, a live language mo
 
 ## What is not ready
 
-Realtime WebSocket turns, Silero voice activity detection, barge-in, and a streaming language model. See [Production status](../production-status.md).
+The Silero file is not bundled, so endpointing is energy-based until you set `SONIC_VAD_MODEL_PATH`. OllaBridge does not route this audio. No headset run is claimed. See [Production status](../production-status.md).

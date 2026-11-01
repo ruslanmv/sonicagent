@@ -6,7 +6,7 @@ export const Codec = { PCM16: 1, OPUS_RESERVED: 2 } as const;
 export const FLAG_END_OF_UTTERANCE = 1 << 0;
 export const CONTROL_EVENTS = ["ping", "session.update", "response.cancel"] as const;
 export const SERVER_EVENTS = [
-  "session.created", "speech.started", "speech.frame", "speech.stopped",
+  "session.created", "session.updated", "speech.started", "speech.frame", "speech.stopped",
   "transcript.partial", "transcript.final", "transcript.failed",
   "response.created", "response.text.delta", "response.text.done",
   "response.audio.started", "response.audio.done", "response.cancelled", "metrics.turn", "error",

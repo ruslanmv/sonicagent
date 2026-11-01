@@ -18,5 +18,5 @@ export SONIC_API_KEY=your-service-token
 make benchmark-endpoints
 ```
 
-The command writes `benchmarks/results/endpoints.json`. The published pass is [`benchmarks/reports/hf-cpu-basic-endpoint-capability.md`](../benchmarks/reports/hf-cpu-basic-endpoint-capability.md). Read [`benchmarks/README.md`](../benchmarks/README.md) before quoting a figure. A headset still waits for the full WAV, because realtime playback is not implemented.
+The command writes `benchmarks/results/endpoints.json`. The published pass is [`benchmarks/reports/hf-cpu-basic-endpoint-capability.md`](../benchmarks/reports/hf-cpu-basic-endpoint-capability.md). Read [`benchmarks/README.md`](../benchmarks/README.md) before quoting a figure. That pass is batch HTTP from a Linux client. It does not time the realtime socket.
 

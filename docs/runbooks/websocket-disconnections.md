@@ -1,16 +1,22 @@
-# Websocket Disconnections
+# WebSocket disconnections
 
-This document is part of the SonicAgent production roadmap.
+A dropped realtime socket cancels the active turn and releases the session so the same resume token can connect again.
 
-## Purpose
+## What you should see
 
-TODO: replace this placeholder with reviewed implementation and operational guidance.
+- The first connection receives `session.created` with `resumed: false`.
+- A second connection while the first is open is closed with code 1008.
+- After the first socket closes, the next connection receives `session.updated` with `resumed: true`.
+- Input sequence numbers start again at the client's first frame. A gap or replay returns `invalid_audio`.
+- `response.cancelled` with `clear_audio: true` means the browser must drop queued playback.
 
-## Required content before v1.0
+## Checks
 
-- Scope, assumptions, and non-goals.
-- Interfaces and configuration.
-- Failure modes and recovery.
-- Security and privacy implications.
-- Tests, metrics, and acceptance criteria.
-- Links to source modules and ADRs.
+1. `GET /health/ready` shows whether Whisper is loaded. Live health does not.
+2. Confirm the client is sending the resume token as a query parameter and not writing it to a log.
+3. Confirm only one tab holds the session.
+4. If turns pile up, read `sonicagent_realtime_inflight` on `/metrics`. It has no transcript labels.
+
+## What this is not
+
+A disconnect is not a headset failure report. The browser AudioWorklet page and Voice Studio are different clients.

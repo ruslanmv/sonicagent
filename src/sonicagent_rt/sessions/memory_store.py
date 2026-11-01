@@ -35,6 +35,29 @@ class MemorySessionStore:
                 raise Unauthenticated("authentication is required")
             return session
 
+    def acquire(self, session_id: str, resume_token: str) -> tuple[SpeechSession, bool]:
+        current_time = time.monotonic()
+        with self._lock:
+            self._drop_expired(current_time)
+            current = self._items.get(session_id)
+            if current is None or not _same(current.resume_token, resume_token):
+                raise Unauthenticated("authentication is required")
+            if current.expires_at <= current_time:
+                self._items.pop(session_id, None)
+                raise Unauthenticated("authentication is required")
+            if current.held:
+                raise RateLimited("session is already connected")
+            resumed = current.connects > 0
+            current.held = True
+            current.connects += 1
+            return current, resumed
+
+    def release(self, session_id: str) -> None:
+        with self._lock:
+            current = self._items.get(session_id)
+            if current is not None:
+                current.held = False
+
     def discard(self, session_id: str) -> None:
         with self._lock:
             self._items.pop(session_id, None)
