@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
@@ -28,6 +29,7 @@ def test_required_files_exist() -> None:
         "scripts/prepare-space.py",
         "scripts/deploy-space.sh",
         "scripts/deploy-space.ps1",
+        "scripts/upload-space.py",
     ]
     missing = [name for name in required if not (HF / name).is_file()]
     assert missing == []
@@ -80,18 +82,51 @@ def test_staging_contains_engine_and_no_secrets(tmp_path: Path) -> None:
     assert (destination / "README.md").read_text(encoding="utf-8").startswith("---")
     secret_names = [path.name for path in destination.rglob("*") if path.name == ".env" or path.name == "credentials.json"]
     assert secret_names == []
+    examples = {path.name for path in (destination / "hf" / "ui" / "examples").glob("*.wav")}
+    assert {
+        "en_GB-cori-medium.wav",
+        "en_US-kristin-medium.wav",
+        "es_MX-ald-companion.wav",
+        "es_MX-ald-medium.wav",
+        "fr_FR-upmc-medium.wav",
+    } <= examples
 
 
 def test_master_push_deploys_the_prepared_space() -> None:
     text = (ROOT / ".github" / "workflows" / "huggingface-space.yml").read_text(encoding="utf-8")
     assert 'branches: ["main", "master"]' in text
     assert "hf/scripts/prepare-space.py" in text
+    assert "hf/scripts/upload-space.py" in text
+    assert "hf-xet" in text
     assert "secrets.HF_TOKEN" in text
     assert "secrets.HF_USERNAME" in text
     assert "secrets.SPACE_NAME" in text
-    assert "git push --force" in text
-    assert "hf_" not in text
+    assert "git push" not in text
     assert "https://${HF_USERNAME}:${HF_TOKEN}" not in text
+    script = (HF / "scripts" / "upload-space.py").read_text(encoding="utf-8")
+    assert "upload_folder" in script
+    assert "hf_xet" in script
+    assert "git push" not in script
+    assert "subprocess" not in script
+    assert "HF_TOKEN" in script
+
+
+def test_stale_remote_paths_keep_attributes_and_current_files() -> None:
+    path = HF / "scripts" / "upload-space.py"
+    spec = importlib.util.spec_from_file_location("upload_space", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    stale = module.stale_remote_paths(
+        {"Dockerfile", "hf/ui/examples/en_GB-cori-medium.wav"},
+        {
+            ".gitattributes",
+            "Dockerfile",
+            "old/readme.md",
+            "hf/ui/examples/en_GB-cori-medium.wav",
+        },
+    )
+    assert stale == ["old/readme.md"]
 
 
 def test_shell_scripts_have_bash_syntax() -> None:

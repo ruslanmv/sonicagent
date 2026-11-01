@@ -251,21 +251,11 @@ hf upload ruslanmv/SonicAgent STAGING_DIR . --repo-type=space --commit-message "
 
 It does not pass `--delete`, so files outside the managed set are left in place.
 
-Git alternative, after you have cloned the Space with your own credentials:
-
-```bash
-git clone https://huggingface.co/spaces/ruslanmv/SonicAgent /tmp/sonicagent-space
-python hf/scripts/prepare-space.py --dest /tmp/sonicagent-space
-cd /tmp/sonicagent-space
-git status
-git add Dockerfile README.md app.py requirements.txt setup-models.py pyproject.toml src model_registry deploy .dockerignore
-git commit -m "Deploy SonicAgent voice service"
-git push
-```
+Do not upload this tree with Git. The Space rejects that upload when it contains the Voice Studio WAV examples and asks for Xet storage. `deploy-space.sh --push` and the GitHub Action both use the Hub client, which stores those audio files in Xet.
 
 If `hf auth whoami` fails, stop. The dry run is still valid. Finish the login locally and rerun `--push`. A local checkout does not authenticate by itself.
 
-A push to `master` or `main` runs `.github/workflows/huggingface-space.yml`. The job stages this same tree with `prepare-space.py` and force-pushes it to the Space `main` branch. Repository secrets are `HF_TOKEN` (a write token), `HF_USERNAME` (`ruslanmv`), and `SPACE_NAME` (`SonicAgent`). The workflow does not print the token.
+A push to `master` or `main` runs `.github/workflows/huggingface-space.yml`. The job stages this same tree with `prepare-space.py` and uploads it with the Hugging Face Hub client, which stores the Voice Studio WAV examples in Xet. A raw git push of those audio files is rejected by the Space. Repository secrets are `HF_TOKEN` (a write token), `HF_USERNAME` (`ruslanmv`), and `SPACE_NAME` (`SonicAgent`). The workflow does not print the token.
 
 ## 9. Space secrets
 
