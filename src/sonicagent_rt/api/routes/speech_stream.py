@@ -12,7 +12,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from sonicagent_rt.auth.service_token import enforce_origin, require_api_key
-from sonicagent_rt.speech_stream.store import MODES, SpeechStreamSession
+from sonicagent_rt.speech_stream.store import MODES, OPTION_VALUES, SpeechStreamSession, StreamOptions
 from sonicagent_rt.stt.errors import InvalidRequest, VoiceDisabled
 from sonicagent_rt.stt.language_detection import normalize_language
 from sonicagent_rt.tts.models import validate_voice_id
@@ -28,6 +28,8 @@ class StreamSessionCreate(BaseModel):
     voice_id: str = "en_US-lessac-medium"
     stt_provider: str = "faster-whisper"
     input_audio: dict[str, object] = Field(default_factory=dict)
+    # HV3. Optional, negotiated. Absent means sonic-speech-stream-v1 exactly.
+    stream_options: dict[str, object] | None = None
 
 
 @router.post("/stream-sessions")
@@ -49,6 +51,7 @@ async def create_stream_session(body: StreamSessionCreate, request: Request) -> 
         raise InvalidRequest("stt provider is not available")
     language = normalize_language(body.language, allowed=settings.parsed_stt_languages(), default="en")
     voice_id = validate_voice_id(body.voice_id)
+    options = StreamOptions.parse(body.stream_options, default_frame_ms=settings.audio_frame_ms)
     stt = request.app.state.stt.describe()
     tts = request.app.state.tts.describe()
     session_id = f"s_{uuid4().hex}"
@@ -63,6 +66,7 @@ async def create_stream_session(body: StreamSessionCreate, request: Request) -> 
             voice_id=voice_id,
             stt_provider=provider,
             expires_at=now + settings.session_ttl_sec,
+            options=options,
         )
     )
     expires = datetime.now(timezone.utc) + timedelta(seconds=settings.session_ttl_sec)
@@ -88,5 +92,12 @@ async def create_stream_session(body: StreamSessionCreate, request: Request) -> 
             "incremental": "sentence",
             "ready": bool(tts.ready),
         },
-        "input_audio": {"codec": "pcm_s16le", "sample_rate": 16000, "channels": 1, "frame_ms": [20, 40]},
+        "input_audio": {
+            "codec": "pcm_s16le",
+            "sample_rate": settings.input_sample_rate,
+            "channels": 1,
+            "frame_ms": [20, 40],
+        },
+        "options": options.as_dict(),
+        "options_supported": {key: list(values) for key, values in OPTION_VALUES.items()},
     }

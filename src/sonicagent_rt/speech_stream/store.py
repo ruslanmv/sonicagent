@@ -5,12 +5,84 @@ from __future__ import annotations
 import hashlib
 import hmac
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
 from threading import Lock
 
-from sonicagent_rt.stt.errors import RateLimited, Unauthenticated
+from sonicagent_rt.stt.errors import InvalidRequest, RateLimited, Unauthenticated
 
 MODES = ("stt_only", "tts_only", "duplex_speech")
+
+#: Values each negotiable option accepts. The first value of each is the v1
+#: behaviour, and a client that sends no ``stream_options`` gets exactly that.
+OPTION_VALUES: dict[str, tuple[object, ...]] = {
+    # ``all``: a JSON ``tts.audio.chunk`` before every binary frame (v1).
+    # ``none``: binary frames only. The 24-byte header already carries the
+    # sequence, rate and timestamp, and a session speaks one turn at a time,
+    # so the frames between ``tts.audio.meta`` and ``tts.audio.done`` belong
+    # to that turn. Halves the WebSocket messages per second of speech.
+    "chunk_events": ("all", "none"),
+    # Output frame length. 40 ms halves the per-frame overhead again.
+    "output_frame_ms": (20, 40),
+    # ``none``: the server paces output to real time once it is
+    # ``SONIC_MAX_OUTBOUND_QUEUE_MS`` ahead. ``ack``: the client reports
+    # ``playback.ack`` with the milliseconds it has actually played, and the
+    # server keeps at most that limit of unplayed audio in flight.
+    "flow_control": ("none", "ack"),
+    # ``server``: the VAD endpointer cuts utterances (v1). ``client``: the
+    # client owns the turn (push-to-talk, a mic button). Audio is held until
+    # the end-of-utterance flag and transcribed once, so one commit gives
+    # exactly one ``transcript.final`` (empty text when nothing was said),
+    # tagged with the ``commit_seq`` of the frame that ended it.
+    "endpointing": ("server", "client"),
+    # ``false``: ``tts.speak`` while one is running is refused (v1).
+    # ``true``: up to MAX_TTS_QUEUE phrases wait their turn in order, so a
+    # client streaming a reply phrase by phrase never waits a round trip
+    # between them.
+    "tts_queue": (False, True),
+}
+
+MAX_TTS_QUEUE = 16
+
+
+@dataclass(frozen=True)
+class StreamOptions:
+    chunk_events: str = "all"
+    output_frame_ms: int = 20
+    flow_control: str = "none"
+    endpointing: str = "server"
+    tts_queue: bool = False
+
+    @classmethod
+    def parse(cls, raw: object, *, default_frame_ms: int = 20) -> StreamOptions:
+        """Validate a client's ``stream_options``. Unknown keys are refused, not ignored.
+
+        A typo such as ``endpoint`` silently falling back to server endpointing
+        would hand the client two finals for one push-to-talk hold, which is the
+        very thing it asked to avoid.
+        """
+        if raw is None:
+            raw = {}
+        if not isinstance(raw, dict):
+            raise InvalidRequest("stream_options must be an object")
+        unknown = sorted(set(raw) - set(OPTION_VALUES))
+        if unknown:
+            raise InvalidRequest(f"unknown stream option: {unknown[0]}")
+        values: dict[str, object] = {}
+        for key, allowed in OPTION_VALUES.items():
+            if key not in raw:
+                continue
+            value = raw[key]
+            if isinstance(value, str):
+                value = value.strip().lower()
+            if value not in allowed or isinstance(value, bool) != isinstance(allowed[0], bool):
+                raise InvalidRequest(f"stream option {key} must be one of {list(allowed)}")
+            values[key] = value
+        if "output_frame_ms" not in values and default_frame_ms in OPTION_VALUES["output_frame_ms"]:
+            values["output_frame_ms"] = default_frame_ms
+        return cls(**values)  # type: ignore[arg-type]
+
+    def as_dict(self) -> dict[str, object]:
+        return asdict(self)
 
 
 @dataclass
@@ -23,6 +95,7 @@ class SpeechStreamSession:
     stt_provider: str
     expires_at: float
     held: bool = False
+    options: StreamOptions = field(default_factory=StreamOptions)
 
 
 class SpeechStreamStore:
@@ -59,6 +132,11 @@ class SpeechStreamStore:
             current = self._items.get(session_id)
             if current is not None:
                 current.held = False
+
+    def __len__(self) -> int:
+        with self._lock:
+            self._drop_expired(time.monotonic())
+            return len(self._items)
 
     def _drop_expired(self, now: float) -> None:
         expired = [key for key, value in self._items.items() if value.expires_at <= now]
