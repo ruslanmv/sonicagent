@@ -96,9 +96,36 @@ class SpeechStreamSession:
     expires_at: float
     held: bool = False
     options: StreamOptions = field(default_factory=StreamOptions)
+    created_at: float = field(default_factory=time.monotonic)
+    #: Connected once and since disconnected: only a resume can still want it.
+    released: bool = False
+
+
+#: How long a session that was connected and then dropped stays resumable.
+#: A client that comes back later creates a new session, which is what the
+#: Avatar's link does anyway after its idle close.
+RESUME_GRACE_SEC = 60.0
+#: How long a created session may wait for its first connect before it can be
+#: evicted to make room. Clients connect within a second of creating one.
+CONNECT_WINDOW_SEC = 30.0
 
 
 class SpeechStreamStore:
+    """Live and resumable speech sessions, bounded by ``max_sessions``.
+
+    Production finding (2026-11-01): a session used to stay in the store for its
+    whole TTL (``SONIC_SESSION_TTL_SEC``, 30 minutes) after its socket closed,
+    and ``max_sessions`` (8) counted those too. The bound is per service, not
+    per user, and behind OllaBridge Cloud every user shares this one service,
+    so eight page loads or microphone tests in half an hour refused every new
+    voice session for everyone with "too many speech sessions are open" while
+    no socket was open at all. Now a dropped session keeps only a short resume
+    grace, and when the store is full the sessions nobody is connected to —
+    dropped ones, and created ones that never connected within a connect
+    window — make room, oldest first. Only connected sessions, and ones just
+    created and about to connect, can fill it.
+    """
+
     def __init__(self, *, ttl_sec: int, max_sessions: int) -> None:
         self._ttl_sec = ttl_sec
         self._max_sessions = max_sessions
@@ -107,7 +134,10 @@ class SpeechStreamStore:
 
     def put(self, session: SpeechStreamSession) -> None:
         with self._lock:
-            self._drop_expired(time.monotonic())
+            now = time.monotonic()
+            self._drop_expired(now)
+            if session.session_id not in self._items and len(self._items) >= self._max_sessions:
+                self._evict_idle(now)
             if session.session_id not in self._items and len(self._items) >= self._max_sessions:
                 raise RateLimited("too many speech sessions are open")
             self._items[session.session_id] = session
@@ -132,6 +162,23 @@ class SpeechStreamStore:
             current = self._items.get(session_id)
             if current is not None:
                 current.held = False
+                current.released = True
+                current.expires_at = min(current.expires_at, time.monotonic() + RESUME_GRACE_SEC)
+
+    def _evict_idle(self, now: float) -> None:
+        """Drop sessions nobody is connected to, oldest first, until one fits."""
+        idle = sorted(
+            (
+                value
+                for value in self._items.values()
+                if not value.held and (value.released or now - value.created_at >= CONNECT_WINDOW_SEC)
+            ),
+            key=lambda value: value.created_at,
+        )
+        for value in idle:
+            if len(self._items) < self._max_sessions:
+                break
+            self._items.pop(value.session_id, None)
 
     def __len__(self) -> int:
         with self._lock:
