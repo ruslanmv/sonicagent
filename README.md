@@ -14,6 +14,8 @@ SonicAgent transcribes speech and returns a WAV with one authenticated HTTP API.
   <a href="https://github.com/ruslanmv/sonicagent/blob/plan/quest-voice-ollabridge-cloud/docs/roadmaps/quest-voice-ollabridge-cloud.md">Quest and OllaBridge plan</a>
   ·
   <a href="hf/README.md">Deploy locally or on Hugging Face</a>
+  ·
+  <a href="docs/user-guide/avatar-on-meta-quest.md">3D Avatar on Meta Quest 3</a>
 </p>
 
 ## Where it creates impact

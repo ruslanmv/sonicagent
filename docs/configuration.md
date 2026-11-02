@@ -28,6 +28,8 @@ Common settings:
 | `SONIC_AUTH_MODE` | `development` | `token` or production requires a key of at least 24 characters. |
 | `SONIC_MAX_AUDIO_SECONDS` | `15` | Decoded recording cap. |
 | `SONIC_MAX_UPLOAD_BYTES` | `2097152` | Upload cap. |
+| `SONIC_MAX_CONCURRENT_SESSIONS` | `8` | Speech sessions for the whole service — behind OllaBridge Cloud, every user's. Connected sessions count; a dropped one is kept for a 60 s resume and gives way when the store is full. |
+| `SONIC_SESSION_TTL_SEC` | `1800` | Lifetime of a session that stays connected or unused. A closed session no longer keeps it. |
 | `SONIC_TTS_ENABLED` | `false` | Piper stays unavailable until this is true and voice files exist. |
 
 ## Local example

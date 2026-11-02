@@ -19,6 +19,7 @@ from sonicagent_rt.api.app_factory import create_app
 from sonicagent_rt.audio.pcm import floats_to_pcm16
 from sonicagent_rt.protocol.binary_frame import BinaryAudioFrame, decode_frame
 from sonicagent_rt.protocol.constants import FLAG_END_OF_UTTERANCE, Codec, MessageType
+from sonicagent_rt.speech_stream import store as store_module
 from sonicagent_rt.speech_stream.store import SpeechStreamSession, SpeechStreamStore, StreamOptions
 from sonicagent_rt.stt.errors import InvalidRequest, RateLimited, Unauthenticated
 from sonicagent_rt.tts.base import TtsStatus
@@ -415,6 +416,54 @@ def test_the_session_store_is_bounded() -> None:
     with pytest.raises(Unauthenticated):
         store.acquire("s0", "other")
     assert len(store) == 2
+
+
+def _session(name: str, ttl: float = 1800.0) -> SpeechStreamSession:
+    return SpeechStreamSession(name, "tok", "stt_only", "en", "v", "faster-whisper", time.monotonic() + ttl)
+
+
+def test_closed_sessions_do_not_hold_the_service_for_their_whole_ttl() -> None:
+    # Production, 2026-11-01: eight microphone tests through OllaBridge Cloud, each
+    # connected and closed, and the ninth was refused "too many speech sessions are
+    # open" for everyone for 30 minutes while no socket was open.
+    store = SpeechStreamStore(ttl_sec=1800, max_sessions=8)
+    for n in range(8):
+        store.put(_session(f"s{n}"))
+        store.acquire(f"s{n}", "tok")
+        store.release(f"s{n}")
+    store.put(_session("s8"))  # room is made from the dropped ones, oldest first
+    with pytest.raises(Unauthenticated):
+        store.acquire("s0", "tok")
+    assert store.acquire("s7", "tok").session_id == "s7"  # a recent drop is still resumable
+    assert len(store) == 8
+
+
+def test_a_dropped_session_is_resumable_only_for_a_short_grace() -> None:
+    store = SpeechStreamStore(ttl_sec=1800, max_sessions=8)
+    store.put(_session("a"))
+    store.acquire("a", "tok")
+    store.release("a")
+    remaining = store._items["a"].expires_at - time.monotonic()
+    assert 0 < remaining <= store_module.RESUME_GRACE_SEC
+
+
+def test_connected_sessions_are_never_evicted() -> None:
+    store = SpeechStreamStore(ttl_sec=1800, max_sessions=2)
+    for name in ("a", "b"):
+        store.put(_session(name))
+        store.acquire(name, "tok")
+    with pytest.raises(RateLimited):
+        store.put(_session("c"))
+    assert {"a", "b"} == set(store._items)
+
+
+def test_a_session_that_never_connected_makes_room_after_the_connect_window() -> None:
+    store = SpeechStreamStore(ttl_sec=1800, max_sessions=1)
+    stale = _session("never")
+    stale.created_at -= store_module.CONNECT_WINDOW_SEC + 1
+    store.put(stale)
+    store.put(_session("next"))
+    assert set(store._items) == {"next"}
 
 
 def test_capabilities_say_whether_a_turn_would_work_now() -> None:
