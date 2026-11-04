@@ -159,7 +159,7 @@ def _record(item: object, styles: dict[str, object]) -> VoiceRecord | None:
     if not isinstance(item.get("model_path"), str) or not isinstance(item.get("config_path"), str):
         return None
     role = str(item.get("role") or "secretary")
-    style = _style(styles, role)
+    style = _voice_style(item, _style(styles, role))
     speaker = item.get("speaker_id")
     speaker_id = speaker if isinstance(speaker, int) else None
     return VoiceRecord(
@@ -179,6 +179,28 @@ def _record(item: object, styles: dict[str, object]) -> VoiceRecord | None:
         config_path=item["config_path"],
         license=str(item.get("license") or ""),
     )
+
+
+#: Bounds for a scale written on a voice entry. Outside them Piper produces
+#: noise or silence, so a typo in the registry is ignored rather than spoken.
+_SCALE_BOUNDS = {"length_scale": (0.5, 2.0), "noise_scale": (0.0, 1.5), "noise_w_scale": (0.0, 1.5)}
+
+
+def _voice_style(item: dict[str, object], role_style: dict[str, float]) -> dict[str, float]:
+    """A scale written on the voice wins over its role's style.
+
+    The role styles are tuned for whole families of voices. Serena
+    (it_IT-serena, added 2026-11) is trained with noise_scale 0.6 and
+    noise_w 0.4, and her model card says the catalog style (0.667 / 0.8)
+    swallows phonemes, so her entries carry their own scales. Voices with no
+    scales of their own — Paola and every preset — keep the role style.
+    """
+    style = dict(role_style)
+    for key, (low, high) in _SCALE_BOUNDS.items():
+        value = item.get(key)
+        if isinstance(value, (int, float)) and not isinstance(value, bool) and low <= value <= high:
+            style[key] = float(value)
+    return style
 
 
 def _style(styles: dict[str, object], role: str) -> dict[str, float]:

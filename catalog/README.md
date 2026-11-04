@@ -25,12 +25,14 @@ These are Piper synthesis controls. `length_scale` above 1 is slower. Lower nois
 | secretary | 0.94 | 0.48 | 0.6 | Work |
 | catalog | 1.0 | 0.667 | 0.8 | Published speaker, unchanged |
 
+A voice entry may carry its own `length_scale`, `noise_scale` and `noise_w_scale`; those win over its role's style. Serena does (1.0, 0.6, 0.4 — the values she was trained with; her model card says the catalog style swallows phonemes). Every other voice uses its role's style.
+
 ## What is already included
 
-- **49 selectable voices.**
-- **44 ONNX files.** The voice image installs all of them from the mirror. Companion and Secretary ids that share a speaker do not download a second file.
-- **Languages:** English (US), English (UK), Spanish (Spain), Spanish (Mexico), French, German, Italian, Portuguese.
-- **License:** MIT, from the Piper voice projects mirrored in `ruslanmv/hp-piper-voices`.
+- **52 selectable voices.**
+- **47 ONNX files.** The voice image installs all of them from the mirror. Companion and Secretary ids that share a speaker do not download a second file.
+- **Languages:** English (US), English (UK), Spanish (Spain), Spanish (Mexico), Spanish (Argentina), French, German, Italian, Portuguese.
+- **License:** MIT for every voice from the Piper voice projects, except two speakers whose model card names another licence: **Serena** (`it_IT-serena-*`) is **CC-BY-4.0** (dataset `committa/serena-synthetic-it-27h`, synthetic Italian speech) and **Daniela** (`es_AR-daniela-high`) is **CC-BY-SA-4.0** (dataset OpenSLR 61). Both require attribution; the `attribution` field in `voices.json` carries the line to show, and the `MODEL_CARD` sits beside each ONNX on the mirror.
 - Portuguese in this mirror is Edresson and Faber. Both are male. There is no female Portuguese voice to assign to Companion or Secretary.
 
 ## Voices
@@ -86,6 +88,12 @@ These are Piper synthesis controls. `length_scale` above 1 is slower. Lower nois
 | `es_MX-ald-medium` | Ald | secretary | female | medium | Work. Clearer and a little faster. | No higher quality of this speaker is in the mirror. Same file as es_MX-ald-companion. |
 | `es_MX-claude-high` | Claude | catalog | male | high | Published male speaker. | Highest quality published for this speaker. |
 
+### Español (Argentina)
+
+| Id | Name | Role | Gender | Quality | Fit | Upgrade |
+| --- | --- | --- | --- | --- | --- | --- |
+| `es_AR-daniela-high` | Daniela | catalog | female | high | Published female speaker. Neutral settings. CC-BY-SA-4.0. | Highest quality published for this speaker. |
+
 ### Français
 
 | Id | Name | Role | Gender | Quality | Fit | Upgrade |
@@ -116,6 +124,8 @@ These are Piper synthesis controls. `length_scale` above 1 is slower. Lower nois
 | `it_IT-paola-companion` | Paola | companion | female | medium | Adult companion. Warmer and slower. | No higher quality of this speaker is in the mirror. Same file as it_IT-paola-medium. |
 | `it_IT-paola-medium` | Paola | secretary | female | medium | Work. Clearer and a little faster. | No higher quality of this speaker is in the mirror. Same file as it_IT-paola-companion. |
 | `it_IT-riccardo-x_low` | Riccardo | catalog | male | x_low | Published male speaker. | No higher quality of this speaker is in the mirror. |
+| `it_IT-serena-medium` | Serena | catalog | female | medium | Second Italian female speaker. Her own settings (0.6 / 0.4). CC-BY-4.0. | Same speaker also has high. |
+| `it_IT-serena-high` | Serena | catalog | female | high | Second Italian female speaker. Her own settings (0.6 / 0.4). CC-BY-4.0. | Highest quality published for this speaker. |
 
 ### Português
 
@@ -126,14 +136,14 @@ These are Piper synthesis controls. `length_scale` above 1 is slower. Lower nois
 
 ## How to upgrade later
 
-1. Prefer a higher Piper quality when the mirror publishes one for the same speaker. Amy, Ryan, and Siwis already have a lower file and a medium file. Use medium unless you need the smaller file. Claude, `es_MX-claude-high`, is the only `high` file in this mirror.
+1. Prefer a higher Piper quality when the mirror publishes one for the same speaker. Amy, Ryan, and Siwis already have a lower file and a medium file. Use medium unless you need the smaller file. `es_MX-claude-high`, `es_AR-daniela-high` and `it_IT-serena-high` are the `high` files in this mirror.
 2. Add a new speaker by putting the ONNX and config on `ruslanmv/hp-piper-voices`, pinning both sha256 values in `model_registry/voices.json`, and rebuilding the voice image. The image downloads the new file. Do not commit the ONNX into this repository.
-3. A dedicated explicit or seductive model is a step 2 addition. It is not hidden in the current 44 files.
-4. Do not relabel an unlabeled multi-speaker model, such as LibriTTS, Arctic, or MLS, as a female companion. The speaker gender is not identified on those files.
+3. A dedicated explicit or seductive model is a step 2 addition. It is not hidden in the current 47 files.
+4. Do not relabel an unlabeled multi-speaker model, such as LibriTTS, Arctic, or MLS (German, and French `fr_FR-mls-medium`, 125 unlabeled speakers — left out for this reason), as a female companion. The speaker gender is not identified on those files.
 
 ## Checked against the mirror
 
-The 44 ONNX paths in `voices.json` are the 44 `.onnx` files in `ruslanmv/hp-piper-voices` at the time of this catalog. Four files are selected by more than one id:
+The 47 ONNX paths in `voices.json` are the 47 `.onnx` files in `ruslanmv/hp-piper-voices` at the time of this catalog. Serena and Daniela were copied from `rhasspy/piper-voices` main at `e7229f7` (Serena was added after the `v1.0.0` tag), with their `MODEL_CARD`s. Four files are selected by more than one id:
 
 - `es/es_ES/sharvard/medium/es_ES-sharvard-medium.onnx`: `es_ES-sharvard-companion`, `es_ES-sharvard-secretary`, `es_ES-sharvard-male`
 - `es/es_MX/ald/medium/es_MX-ald-medium.onnx`: `es_MX-ald-companion`, `es_MX-ald-medium`
