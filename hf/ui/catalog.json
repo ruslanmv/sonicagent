@@ -211,6 +211,18 @@
       ]
     },
     {
+      "id": "es-AR",
+      "label": "Español (Argentina)",
+      "voices": [
+        {
+          "id": "es_AR-daniela-high",
+          "label": "Daniela",
+          "role": "catalog",
+          "sample": "Hola. Esta es una voz en español."
+        }
+      ]
+    },
+    {
       "id": "fr-FR",
       "label": "Français",
       "voices": [
@@ -319,6 +331,18 @@
         {
           "id": "it_IT-riccardo-x_low",
           "label": "Riccardo · male",
+          "role": "catalog",
+          "sample": "Ciao. Questa è una voce italiana."
+        },
+        {
+          "id": "it_IT-serena-medium",
+          "label": "Serena",
+          "role": "catalog",
+          "sample": "Ciao. Questa è una voce italiana."
+        },
+        {
+          "id": "it_IT-serena-high",
+          "label": "Serena · high",
           "role": "catalog",
           "sample": "Ciao. Questa è una voce italiana."
         }

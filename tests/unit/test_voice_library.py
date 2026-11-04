@@ -108,7 +108,7 @@ def test_voices_say_what_this_server_can_play_now():
         "companion": "it_IT-paola-companion",
         "secretary": "it_IT-paola-medium",
     }
-    assert body["voice_count"] == 49 and body["tts_ready"] is True
+    assert body["voice_count"] == 52 and body["tts_ready"] is True
 
 
 def test_installed_is_not_playable_while_piper_is_not_ready():

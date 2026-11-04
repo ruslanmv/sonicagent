@@ -1,7 +1,7 @@
 # Voice library and speaking profiles (HV9)
 
 SonicAgent speaks with the Piper voices listed in `model_registry/voices.json` (mirror:
-`ruslanmv/hp-piper-voices`): 49 voices, 44 model files, 7 locales with documented presets.
+`ruslanmv/hp-piper-voices`): 52 voices, 47 model files, 7 locales with documented presets.
 
 ## Profiles
 
@@ -12,6 +12,15 @@ The role of a voice picks its synthesis settings (`styles` in the registry):
 | Companion | 1.16 | 0.8 | 0.92 | warm, slightly slower conversation |
 | Secretary / Productivity | 0.94 | 0.48 | 0.6 | clear, slightly faster schedules, lists, reminders |
 | Catalog | 1.0 | 0.667 | 0.8 | every other voice, Piper's defaults |
+
+A voice may carry its own scales in its registry entry; they win over the role's. Serena
+(`it_IT-serena-medium`, `it_IT-serena-high`) uses 1.0 / 0.6 / 0.4, the settings she was trained
+with — her model card says the catalog style swallows phonemes. No other voice has its own scales.
+
+**Added 2026-11:** Serena (Italian, female, medium + high, CC-BY-4.0) and Daniela (Spanish,
+Argentina, female, high, CC-BY-SA-4.0). Both are catalog voices under All Voices; Paola stays the
+Italian Companion and Secretary, and es-AR has no preset. Their licences require attribution — see
+the `attribution` field in `voices.json` and `catalog/README.md`.
 
 Measured with real Piper on the same Paola model, the same Italian sentence: Companion audio is
 on average ~15% longer than Secretary (12 single runs: 1.05–1.21). That is less than the nominal
