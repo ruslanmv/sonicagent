@@ -1,7 +1,7 @@
 # Speech runtime for the Hugging Face image and local Docker image.
 # The SonicAgent package itself is installed from pyproject.toml.
 faster-whisper==1.2.1
-ctranslate2>=4.5,<5
+ctranslate2>=4.8.5,<5
 numpy>=1.26,<3
 av>=13,<20
 onnxruntime>=1.18,<2
