@@ -336,13 +336,13 @@
         },
         {
           "id": "it_IT-serena-medium",
-          "label": "Serena",
+          "label": "Serena · female",
           "role": "catalog",
           "sample": "Ciao. Questa è una voce italiana."
         },
         {
           "id": "it_IT-serena-high",
-          "label": "Serena · high",
+          "label": "Serena (high quality) · female",
           "role": "catalog",
           "sample": "Ciao. Questa è una voce italiana."
         }
