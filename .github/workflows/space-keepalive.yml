@@ -1,0 +1,53 @@
+name: Keep the Space awake
+
+# SonicAgent runs on a free Hugging Face Space, which sleeps after 48 hours without
+# a request. While it sleeps, OllaBridge answers every /v1/voice call with 503, and
+# HomePilot Avatar says "SonicAgent could not start". This job checks the Space
+# four times a day:
+#   - ready: the check is itself the traffic that resets the sleep timer
+#   - asleep: wake it
+#   - crashed or not answering: restart it through the Hub API
+#   - broken build: fail, and GitHub emails the owner
+# All of it lives in hf/scripts/keepalive.py.
+#
+# Run it by hand with "Run workflow". Tick "force" to restart the Space now,
+# even when it is paused.
+#
+# Two notes:
+#   - GitHub runs `schedule` only from the default branch, so this file has to
+#     be on master to fire on its own.
+#   - GitHub disables scheduled workflows after 60 days with no repository
+#     activity. If this job stops running, re-enable it under Actions.
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Restart the Space now (even if it looks fine or is paused)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hf-space-keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: hf/scripts
+      - name: Check, wake or restart the Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ secrets.HF_USERNAME }}
+          SPACE_NAME: ${{ secrets.SPACE_NAME }}
+        run: |
+          python3 hf/scripts/keepalive.py --wait 600 ${{ inputs.force && '--force' || '' }}

@@ -283,6 +283,23 @@ On the Space page, open **Logs** and then the **Build** and **Container** tabs.
 
 The Docker `HEALTHCHECK` calls `/health/live` through `deploy/docker/healthcheck.py`, using `PORT` (7860 in this image). A healthy container can still be `ready: false`.
 
+### Sleep, wake and restart
+
+A free `cpu-basic` Space sleeps after 48 hours without a request. While it sleeps, OllaBridge answers every `/v1/voice/*` call with 503, and HomePilot Avatar shows "SonicAgent could not start: the speech service is starting".
+
+- **Keep-alive.** `.github/workflows/space-keepalive.yml` runs `hf/scripts/keepalive.py` four times a day.
+  - Ready: the check itself resets the sleep timer.
+  - Asleep: it wakes the Space.
+  - Crashed or not answering: it restarts the Space through the Hub API and waits for `/health/ready`.
+  - Broken build: it fails, so GitHub emails the owner.
+  - It uses the `HF_TOKEN`, `HF_USERNAME` and `SPACE_NAME` repository secrets. The token needs write access to restart the Space.
+- **Restart by hand.** In GitHub, open **Actions ▸ Keep the Space awake ▸ Run workflow** and tick **force**. Locally, run `HF_TOKEN=… python3 hf/scripts/keepalive.py --repo-id ruslanmv/SonicAgent --force`.
+- **Logs.** Use the Space page's **Logs**, or the API:
+  - `curl -N -H "Authorization: Bearer $HF_TOKEN" https://huggingface.co/api/spaces/ruslanmv/SonicAgent/logs/run`
+  - the same URL ending in `/logs/build` gives the build logs.
+- **GitHub limits.** GitHub runs `schedule` only from the default branch, and it switches scheduled workflows off after 60 days with no repository activity. If the job stops, re-enable it under Actions.
+- **The browser side.** HomePilot Avatar no longer gives up on the first 503. It wakes the Space, waits up to 75 s, and shows "Waking the speech service…" while it does.
+
 ## 11. Test the hosted API
 
 After the Space build is green, Hugging Face shows the application URL on the Space page. Use that hostname. Do not assume a URL that has not been opened successfully.
