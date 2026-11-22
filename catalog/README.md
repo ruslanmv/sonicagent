@@ -1,6 +1,6 @@
 # Voice catalog
 
-This is the voice library SonicAgent can run. Every row is a selectable id in `model_registry/voices.json`. Most model files come from [`ruslanmv/hp-piper-voices`](https://huggingface.co/ruslanmv/hp-piper-voices). The voice image downloads each unique model and config at build time, using a pinned revision of [Piper Italiano](https://huggingface.co/kirys79/piper_italiano) as a fallback for Aurora and Giorgio if the mirror files are missing. The files are not stored in Git.
+This is the voice library SonicAgent can run. Every row is a selectable id in `model_registry/voices.json`. Every model file comes from [`ruslanmv/hp-piper-voices`](https://huggingface.co/ruslanmv/hp-piper-voices), the one source of truth for voice files. The voice image downloads each unique model and config at build time and checks it against the SHA-256 pinned here. The files are not stored in Git.
 
 `GET /v1/voices` returns this same library. `installed` is true only when that ONNX file and its config are on the machine answering the request.
 
@@ -139,13 +139,13 @@ A voice entry may carry its own `length_scale`, `noise_scale` and `noise_w_scale
 ## How to upgrade later
 
 1. Prefer a higher Piper quality when the mirror publishes one for the same speaker. Amy, Ryan, and Siwis already have a lower file and a medium file. Use medium unless you need the smaller file. `es_MX-claude-high`, `es_AR-daniela-high` and `it_IT-serena-high` are the `high` files in this mirror.
-2. Add a new speaker by putting the ONNX and config on `ruslanmv/hp-piper-voices`, pinning both sha256 values in `model_registry/voices.json`, and rebuilding the voice image. To support installs before a voice is mirrored, set `fallback_urls` to the pinned upstream model and config URLs. The image downloads the new files. Do not commit the ONNX into this repository.
+2. Add a new speaker by putting the ONNX and config on `ruslanmv/hp-piper-voices`, pinning both sha256 values in `model_registry/voices.json`, and rebuilding the voice image. Mirror the files first: the registry names no other source (`hf/tests/test_setup_models.py` enforces it). The image downloads the new files. Do not commit the ONNX into this repository.
 3. A dedicated explicit or seductive model is a step 2 addition. It is not hidden in the current 49 files.
 4. Do not relabel an unlabeled multi-speaker model, such as LibriTTS, Arctic, or MLS (German, and French `fr_FR-mls-medium`, 125 unlabeled speakers — left out for this reason), as a female companion. The speaker gender is not identified on those files.
 
 ## Checked against the mirror
 
-Of the 49 ONNX paths in `voices.json`, 47 come from `ruslanmv/hp-piper-voices` and two can fall back to Piper Italiano until their files are mirrored. Publish the exact bytes at the registry paths, including the `.onnx.json` filename for Giorgio’s config. Serena and Daniela were copied from `rhasspy/piper-voices` main at `e7229f7` (Serena was added after the `v1.0.0` tag), with their `MODEL_CARD`s. Four files are selected by more than one id:
+All 49 ONNX paths in `voices.json` come from `ruslanmv/hp-piper-voices`. Aurora and Giorgio were copied byte for byte from [Piper Italiano](https://huggingface.co/kirys79/piper_italiano) at `37020d3` (Giorgio renamed from `giorgio-epoch=5028-step=1098436.*` to `it_IT-giorgio-high.onnx` / `.onnx.json`), with a `MODEL_CARD` each carrying the CC BY 4.0 credit. Serena and Daniela were copied from `rhasspy/piper-voices` main at `e7229f7` (Serena was added after the `v1.0.0` tag), with their `MODEL_CARD`s. Four files are selected by more than one id:
 
 - `es/es_ES/sharvard/medium/es_ES-sharvard-medium.onnx`: `es_ES-sharvard-companion`, `es_ES-sharvard-secretary`, `es_ES-sharvard-male`
 - `es/es_MX/ald/medium/es_MX-ald-medium.onnx`: `es_MX-ald-companion`, `es_MX-ald-medium`

@@ -891,11 +891,7 @@
       "license": "CC-BY-4.0",
       "source_project": "Piper Italiano",
       "status": "catalog",
-      "attribution": "Aurora by kirys79 (https://huggingface.co/kirys79/piper_italiano), trained on Multilingual LibriSpeech Italian speaker 6807 (https://www.openslr.org/94/), CC BY 4.0",
-      "fallback_urls": [
-        "https://huggingface.co/kirys79/piper_italiano/resolve/37020d3892ae230be3b8da27cec260459ecb0594/Aurora/it_IT-aurora-medium.onnx",
-        "https://huggingface.co/kirys79/piper_italiano/resolve/37020d3892ae230be3b8da27cec260459ecb0594/Aurora/it_IT-aurora-medium.onnx.json"
-      ]
+      "attribution": "Aurora by kirys79 (https://huggingface.co/kirys79/piper_italiano), trained on Multilingual LibriSpeech Italian speaker 6807 (https://www.openslr.org/94/), CC BY 4.0"
     },
     {
       "id": "it_IT-giorgio-high",
@@ -914,11 +910,7 @@
       "license": "CC-BY-4.0",
       "source_project": "Piper Italiano",
       "status": "catalog",
-      "attribution": "Giorgio by kirys79 (https://huggingface.co/kirys79/piper_italiano), trained on Multilingual LibriSpeech Italian speaker 8181 (https://www.openslr.org/94/), CC BY 4.0",
-      "fallback_urls": [
-        "https://huggingface.co/kirys79/piper_italiano/resolve/37020d3892ae230be3b8da27cec260459ecb0594/Giorgio/giorgio-epoch=5028-step=1098436.onnx",
-        "https://huggingface.co/kirys79/piper_italiano/resolve/37020d3892ae230be3b8da27cec260459ecb0594/Giorgio/giorgio-epoch=5028-step=1098436.json"
-      ]
+      "attribution": "Giorgio by kirys79 (https://huggingface.co/kirys79/piper_italiano), trained on Multilingual LibriSpeech Italian speaker 8181 (https://www.openslr.org/94/), CC BY 4.0"
     },
     {
       "id": "it_IT-serena-medium",
