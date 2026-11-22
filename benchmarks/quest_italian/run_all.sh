@@ -9,7 +9,8 @@
 #        run_all.sh jitter200 '{"jitterMs":200}' it_IT-giorgio-high
 #
 # Every voice gets a FRESH SonicAgent process, so its first reply is a true cold start.
-# Server-side changes are tested by exporting SONIC_* before calling this (they pass through).
+# Server-side settings: export SONIC_* first (they pass through). Server code from another
+# checkout: export PYTHONPATH=<that checkout>/src (it shadows the editable install).
 # See README.md next to this file for one-time setup.
 set -uo pipefail
 
@@ -36,18 +37,19 @@ mkdir -p "$WORK/www" "$WORK/logs" "$BENCH_RESULTS"
 # The page: the Avatar's src/ as it is, plus bench.html.
 ln -sfn "$AVATAR_DIR/src" "$WORK/www/src"
 cp "$HERE/bench.html" "$WORK/www/bench.html"
+# Servers are started detached (setsid, stdin from /dev/null) so they never hold this script's
+# output pipe open, and they show up under their own names in `ps`, not as run_all.sh.
 if ! curl -s -m 2 "$ORIGIN/bench.html" >/dev/null; then
-    (cd "$WORK/www" && nohup python3 -m http.server "$WWW_PORT" --bind 127.0.0.1 >"$WORK/logs/www.log" 2>&1 &)
+    setsid python3 -m http.server "$WWW_PORT" --bind 127.0.0.1 --directory "$WORK/www" \
+        </dev/null >"$WORK/logs/www.log" 2>&1 &
 fi
 
 # OllaBridge, once for the whole run.
 if ! curl -s -m 2 "http://127.0.0.1:$OB_PORT/health" >/dev/null; then
-    (
-        cd "$HERE" &&
-            OLLAMBRIDGE_VOICE_MODE=huggingface OLLAMBRIDGE_VOICE_BASE_URL=http://127.0.0.1:$SA_PORT \
-                OLLAMBRIDGE_VOICE_API_KEY=$KEY OLLAMBRIDGE_VOICE_ALLOWED_ORIGINS=$ORIGIN CORS_ORIGINS=$ORIGIN \
-                nohup "$OLLABRIDGE_DIR/.venv/bin/python" ollabridge_bench.py >"$WORK/logs/ollabridge.log" 2>&1 &
-    )
+    OLLAMBRIDGE_VOICE_MODE=huggingface OLLAMBRIDGE_VOICE_BASE_URL=http://127.0.0.1:$SA_PORT \
+        OLLAMBRIDGE_VOICE_API_KEY=$KEY OLLAMBRIDGE_VOICE_ALLOWED_ORIGINS=$ORIGIN CORS_ORIGINS=$ORIGIN \
+        setsid "$OLLABRIDGE_DIR/.venv/bin/python" "$HERE/ollabridge_bench.py" \
+        </dev/null >"$WORK/logs/ollabridge.log" 2>&1 &
     sleep 8
 fi
 
@@ -60,9 +62,9 @@ start_sonic() {
                 SONIC_AUTH_MODE=token SONIC_API_KEY=$KEY SONIC_STT_MODEL=tiny SONIC_STT_ALLOW_DOWNLOAD=true \
                 SONIC_STT_WARMUP=true SONIC_STT_CPU_THREADS=2 SONIC_STT_MAX_CONCURRENCY=1 \
                 SONIC_TTS_VOICE=${SONIC_TTS_VOICE:-it_IT-riccardo-x_low} SONIC_ALLOWED_ORIGINS=$ORIGIN \
-                nohup taskset -c "$SA_CPUS" .venv/bin/uvicorn sonicagent_rt.app:app --host 127.0.0.1 \
-                --port "$SA_PORT" --workers 1 >"$WORK/logs/sonicagent-$label-$1.log" 2>&1 &
-    )
+                exec setsid taskset -c "$SA_CPUS" .venv/bin/uvicorn sonicagent_rt.app:app --host 127.0.0.1 \
+                --port "$SA_PORT" --workers 1 </dev/null >"$WORK/logs/sonicagent-$label-$1.log" 2>&1
+    ) &
     # Ready = OllaBridge reports SonicAgent's STT and TTS ready (it refuses sessions before).
     for _ in $(seq 1 120); do
         curl -s -m 2 -H "Authorization: Bearer bench-device-token" \

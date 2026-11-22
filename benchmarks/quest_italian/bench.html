@@ -120,7 +120,14 @@
             tapLink();
         });
     /** HV5: the reply arrives as LLM tokens at `tokMs` per word; phrases go out as they close. */
-    window.benchStream = (text, voiceId, tokMs) =>
+    // The reply's voice comes from the app's Auto policy, which honours an explicit pick only
+    // once the voice library is known (the app loads it at engine init). Load it first, or
+    // streamReply silently speaks the locale preset (Paola) instead of the voice under test.
+    window.benchStream = async (text, voiceId, tokMs) => {
+        await tts().refreshLibrary(true);
+        return benchStreamTurn(text, voiceId, tokMs);
+    };
+    const benchStreamTurn = (text, voiceId, tokMs) =>
         new Promise((resolve) => {
             __gaps = [];
             __frames = [];

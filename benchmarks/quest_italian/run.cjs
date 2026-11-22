@@ -72,6 +72,7 @@ function summarize(name, rep, r) {
         gaps: (r.gaps || []).map((g) => Math.round(g.ms)),
         gapTotalMs: Math.round((r.gaps || []).reduce((a, g) => a + g.ms, 0)),
         cold: s.cold,
+        voice: s.voice,
         server: s.server,
         phrases: Object.keys(phrases).length,
         stopAt: r.stopAt,
@@ -125,6 +126,9 @@ function summarize(name, rep, r) {
         await run('interrupt', rep, () => p.evaluate(([t, v]) => benchSpeak(t, v, { stopAfterMs: 1500 }), [T.long, voice]));
         await run('after-interrupt', rep, () => p.evaluate(([t, v]) => benchSpeak(t, v), [T.short2, voice]));
     }
+    // A turn spoken in another voice than the one under test is a harness error, not a result.
+    const wrong = results.filter((r) => r.voice && r.voice !== voice);
+    if (wrong.length) console.log(`WARNING ${wrong.length} turns used another voice: ${[...new Set(wrong.map((r) => r.voice))]}`);
     fs.writeFileSync(path.join(outDir, `${voice}.json`), JSON.stringify({ voice, label, cfg, texts: T, results }, null, 1));
     await b.close();
 })();
