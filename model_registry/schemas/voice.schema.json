@@ -37,6 +37,13 @@
           "config_path": {
             "type": "string"
           },
+          "fallback_urls": {
+            "type": "array",
+            "description": "Pinned upstream URLs for the model and its config, in that order.",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {"type": "string", "format": "uri"}
+          },
           "license": {
             "type": "string"
           }

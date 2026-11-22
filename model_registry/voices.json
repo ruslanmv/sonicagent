@@ -875,6 +875,52 @@
       "status": "catalog"
     },
     {
+      "id": "it_IT-aurora-medium",
+      "display_name": "Aurora",
+      "role": "catalog",
+      "gender": "female",
+      "language": "it",
+      "locale": "it-IT",
+      "language_label": "Italiano",
+      "quality": "medium",
+      "speaker_id": null,
+      "model_path": "it/it_IT/aurora/medium/it_IT-aurora-medium.onnx",
+      "config_path": "it/it_IT/aurora/medium/it_IT-aurora-medium.onnx.json",
+      "model_sha256": "15528ee12e6c2a29bb67109e8306eb41cf3a02ff80bd835bdba2d4e8f82b38b2",
+      "config_sha256": "70973d95ba64790fd5b16b0b357c63f370c8288c80debfb4eabf177c7c264ba3",
+      "license": "CC-BY-4.0",
+      "source_project": "Piper Italiano",
+      "status": "catalog",
+      "attribution": "Aurora by kirys79 (https://huggingface.co/kirys79/piper_italiano), trained on Multilingual LibriSpeech Italian speaker 6807 (https://www.openslr.org/94/), CC BY 4.0",
+      "fallback_urls": [
+        "https://huggingface.co/kirys79/piper_italiano/resolve/37020d3892ae230be3b8da27cec260459ecb0594/Aurora/it_IT-aurora-medium.onnx",
+        "https://huggingface.co/kirys79/piper_italiano/resolve/37020d3892ae230be3b8da27cec260459ecb0594/Aurora/it_IT-aurora-medium.onnx.json"
+      ]
+    },
+    {
+      "id": "it_IT-giorgio-high",
+      "display_name": "Giorgio",
+      "role": "catalog",
+      "gender": "male",
+      "language": "it",
+      "locale": "it-IT",
+      "language_label": "Italiano",
+      "quality": "high",
+      "speaker_id": null,
+      "model_path": "it/it_IT/giorgio/high/it_IT-giorgio-high.onnx",
+      "config_path": "it/it_IT/giorgio/high/it_IT-giorgio-high.onnx.json",
+      "model_sha256": "6bfc837a53dd420a7d10e6d237eee2d7d276ee5cb3bf521bfa2b2446d0ff1dc9",
+      "config_sha256": "3cdc6f20d2bb287c3bcf33e5b88340810e53908ab507b54a78abecffff8e1aac",
+      "license": "CC-BY-4.0",
+      "source_project": "Piper Italiano",
+      "status": "catalog",
+      "attribution": "Giorgio by kirys79 (https://huggingface.co/kirys79/piper_italiano), trained on Multilingual LibriSpeech Italian speaker 8181 (https://www.openslr.org/94/), CC BY 4.0",
+      "fallback_urls": [
+        "https://huggingface.co/kirys79/piper_italiano/resolve/37020d3892ae230be3b8da27cec260459ecb0594/Giorgio/giorgio-epoch=5028-step=1098436.onnx",
+        "https://huggingface.co/kirys79/piper_italiano/resolve/37020d3892ae230be3b8da27cec260459ecb0594/Giorgio/giorgio-epoch=5028-step=1098436.json"
+      ]
+    },
+    {
       "id": "it_IT-serena-medium",
       "display_name": "Serena",
       "role": "catalog",

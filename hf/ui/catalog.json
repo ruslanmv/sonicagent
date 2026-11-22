@@ -335,6 +335,18 @@
           "sample": "Ciao. Questa è una voce italiana."
         },
         {
+          "id": "it_IT-aurora-medium",
+          "label": "Aurora · female",
+          "role": "catalog",
+          "sample": "Ciao. Questa è una voce italiana."
+        },
+        {
+          "id": "it_IT-giorgio-high",
+          "label": "Giorgio · male",
+          "role": "catalog",
+          "sample": "Ciao. Questa è una voce italiana."
+        },
+        {
           "id": "it_IT-serena-medium",
           "label": "Serena · female",
           "role": "catalog",

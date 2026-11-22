@@ -1,9 +1,9 @@
 """Download the pinned multilingual Whisper checkpoint into the model cache.
 
 Optional Piper voices are downloaded only with ``--tts``. The file list is
-every voice in ``model_registry/voices.json``, hosted on
-``ruslanmv/hp-piper-voices``. Files are not loaded unless ``SONIC_TTS_ENABLED``
-is true and both the ONNX file and its JSON config are present.
+every voice in ``model_registry/voices.json``. The installer uses the
+``ruslanmv/hp-piper-voices`` mirror and falls back to a pinned upstream URL
+when configured. Synthesis requires ``SONIC_TTS_ENABLED`` and both voice files.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ import json
 import sys
 import urllib.request
 from pathlib import Path
+from urllib.error import HTTPError
 
 VOICE_BASE = "https://huggingface.co/ruslanmv/hp-piper-voices/resolve/main"
 
@@ -64,8 +65,19 @@ def install_voices(cache_dir: Path) -> None:
         if not model_path or model_path in seen:
             continue
         seen.add(model_path)
-        _download(f"{base}/{model_path}", voice_dir / Path(model_path).name, str(item.get("model_sha256") or ""))
-        _download(f"{base}/{config_path}", voice_dir / Path(config_path).name, str(item.get("config_sha256") or ""))
+        fallback_urls = item.get("fallback_urls") or (None, None)
+        for path, checksum, fallback_url in (
+            (model_path, "model_sha256", fallback_urls[0]),
+            (config_path, "config_sha256", fallback_urls[1]),
+        ):
+            destination = voice_dir / Path(path).name
+            expected_sha256 = str(item.get(checksum) or "")
+            try:
+                _download(f"{base}/{path}", destination, expected_sha256)
+            except HTTPError as exc:
+                if not fallback_url or exc.code != 404:
+                    raise
+                _download(fallback_url, destination, expected_sha256)
         print(f"voice ready: {Path(model_path).stem}")
 
 

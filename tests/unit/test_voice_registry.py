@@ -60,6 +60,8 @@ def test_italian_and_spanish_do_not_include_english_voices() -> None:
         "it_IT-paola-companion",
         "it_IT-paola-medium",
         "it_IT-riccardo-x_low",
+        "it_IT-aurora-medium",
+        "it_IT-giorgio-high",
         "it_IT-serena-medium",
         "it_IT-serena-high",
     }
