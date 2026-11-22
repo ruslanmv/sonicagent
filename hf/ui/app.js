@@ -364,9 +364,13 @@
     var note="Published speaker";
     if (role==="companion") { group="Companion"; note="Warmer and slower"; }
     else if (role==="secretary") { group="Secretary"; note="Clearer, for work"; }
-    else if (gender==="female") { group="More female voices"; note="Published female speaker"; }
-    else if (gender==="male") { group="More male voices"; note="Published male speaker"; }
-    return {id:voice.id,label:label,name:label.split(" · ")[0],role:role,gender:gender,group:group,note:note,sample:voice.sample || "",attribution:voice.attribution || "",locale:locale.id,localeLabel:locale.label,accent:accentTerms(locale.id)};
+    else if (gender==="female") { group="More female voices"; note=""; }
+    else if (gender==="male") { group="More male voices"; note=""; }
+    // Quality is the model's own (the id's last part); "high" earns the HD badge, so the name
+    // no longer needs "(high quality)" spelled out.
+    var quality=(/-(x_low|low|medium|high)$/.exec(voice.id) || [])[1] || "";
+    var name=label.split(" · ")[0].replace(/\s*\(high quality\)\s*/i,"");
+    return {id:voice.id,label:label,name:name,quality:quality,role:role,gender:gender,group:group,note:note,sample:voice.sample || "",locale:locale.id,localeLabel:locale.label,accent:accentTerms(locale.id)};
   }
   function voiceHay(voice) {
     return [voice.name,voice.label,voice.group,voice.gender,voice.note,voice.localeLabel,voice.accent].join(" ").toLowerCase();
@@ -483,28 +487,46 @@
     var main=document.createElement("button");
     main.type="button";
     main.className="voice-main";
+    // Monogram avatar; while the preview plays it becomes a small equalizer.
+    var avatar=document.createElement("span");
+    avatar.className="voice-avatar voice-avatar--"+(voice.gender==="male"?"male":"female");
+    avatar.setAttribute("aria-hidden","true");
+    var initial=document.createElement("span");
+    initial.className="voice-initial";
+    initial.textContent=(voice.name || "?").charAt(0).toUpperCase();
+    var eq=document.createElement("span");
+    eq.className="voice-eq";
+    for (var b=0;b<3;b++) eq.append(document.createElement("i"));
+    avatar.append(initial, eq);
+    var text=document.createElement("span");
+    text.className="voice-text";
     var title=document.createElement("b");
     title.textContent=voice.name;
     var tags=document.createElement("span");
     tags.className="voice-tags";
-    [voice.gender, voice.role==="catalog"?"Catalog":voice.role].forEach(function(tag){
+    var pills=[voice.gender];
+    if (voice.role==="companion" || voice.role==="secretary") pills.push(voice.role);
+    pills.forEach(function(tag){
       var pill=document.createElement("span");
       pill.textContent=tag.charAt(0).toUpperCase()+tag.slice(1);
       tags.append(pill);
     });
-    var note=document.createElement("span");
-    note.className="voice-note";
-    note.textContent=voice.note;
-    main.append(title, tags, note);
-    main.addEventListener("click", function(){ chooseVoice(voice.id); });
-    // CC BY / CC BY-SA voices (Serena, Daniela, Aurora, Giorgio) must credit their authors
-    // wherever they are offered; the line is the registry's own attribution, links included.
-    if (voice.attribution) {
-      var body=document.createElement("div");
-      body.className="voice-body";
-      body.append(main, creditLine(voice.attribution));
-      main=body;
+    if (voice.quality==="high") {
+      var hd=document.createElement("span");
+      hd.className="voice-hd";
+      hd.textContent="HD";
+      hd.title="High-quality model";
+      tags.append(hd);
     }
+    text.append(title, tags);
+    if (voice.note) {
+      var note=document.createElement("span");
+      note.className="voice-note";
+      note.textContent=voice.note;
+      text.append(note);
+    }
+    main.append(avatar, text);
+    main.addEventListener("click", function(){ chooseVoice(voice.id); });
     var play=document.createElement("button");
     play.type="button";
     play.className="voice-play";
@@ -514,20 +536,6 @@
     play.addEventListener("click", function(){ playVoice(voice); });
     card.append(main, play);
     return card;
-  }
-  function creditLine(text) {
-    var line=document.createElement("span");
-    line.className="voice-credit";
-    String(text).split(/(https?:\/\/[^\s)]+)/).forEach(function(part, i){
-      if (!part) return;
-      if (i % 2) {
-        var a=document.createElement("a");
-        a.href=part; a.target="_blank"; a.rel="noopener noreferrer";
-        a.textContent=part.replace(/^https?:\/\//,"");
-        line.append(a);
-      } else line.append(document.createTextNode(part));
-    });
-    return line;
   }
   function renderFilters() {
     E.voiceFilters.replaceChildren();

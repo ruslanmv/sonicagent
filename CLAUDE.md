@@ -46,9 +46,12 @@ source (`hf/tests/test_setup_models.py`). Adding a voice:
    (dry run), then `--push`: additive only, SHA-checked against the registry,
    one commit pinned to the mirror head, a `MODEL_CARD` for non-MIT voices. The
    registry entry must exist locally first (the script reads its SHA-256s).
-3. Registry entry (`voices.json`), `hf/ui/catalog.json` (with the same
-   `attribution` for non-MIT voices: test-enforced), a preview WAV in
-   `hf/ui/examples/<id>.wav`, `catalog/README.md`, the voice-count test in
+3. Registry entry (`voices.json`, with `attribution` for non-MIT voices:
+   test-enforced; credits live there, in `catalog/README.md` and the mirror's
+   `MODEL_CARD`, not on Voice Studio's cards, by the owner's choice),
+   `hf/ui/catalog.json`, a preview WAV made with `hf/scripts/make-previews.py`
+   (audition sentences first; a lone opening "Ciao." garbled both Piper
+   Italiano voices) in `hf/ui/examples/<id>.wav`, `catalog/README.md`, the voice-count test in
    `tests/contract/test_model_manifest.py`.
 4. Update the mirror's `README.md` (count, language rows, licence table) as its
    own reviewed commit; it is not additive.

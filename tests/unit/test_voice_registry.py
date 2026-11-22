@@ -115,26 +115,3 @@ def test_every_non_mit_voice_names_whom_to_credit() -> None:
         if entry["license"] != "MIT":
             assert entry.get("attribution"), entry["id"]
             assert len(entry["model_sha256"]) == 64 and len(entry["config_sha256"]) == 64, entry["id"]
-
-
-def test_voice_studio_credits_every_non_mit_voice_as_the_registry_does() -> None:
-    # CC BY / CC BY-SA require credit where the voice is offered. Voice Studio's cards show the
-    # catalog's `attribution`, so it must exist for exactly the non-MIT voices and say what the
-    # registry says (one source of truth: a reworded credit in one place is a wrong credit).
-    import json
-    from pathlib import Path
-
-    root = Path(__file__).resolve().parents[2]
-    registry = {
-        v["id"]: v for v in json.loads((root / "model_registry" / "voices.json").read_text("utf-8"))["voices"]
-    }
-    catalog = json.loads((root / "hf" / "ui" / "catalog.json").read_text("utf-8"))
-    for locale in catalog["locales"]:
-        for voice in locale["voices"]:
-            entry = registry[voice["id"]]
-            if entry["license"] == "MIT":
-                assert "attribution" not in voice, voice["id"]
-            else:
-                assert voice.get("attribution") == entry["attribution"], voice["id"]
-    script = (root / "hf" / "ui" / "app.js").read_text("utf-8")
-    assert "creditLine(voice.attribution)" in script
