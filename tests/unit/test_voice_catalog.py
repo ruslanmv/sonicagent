@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_catalog_document_names_every_registered_voice() -> None:
     catalog = voice_catalog()
     text = (ROOT / "catalog" / "README.md").read_text(encoding="utf-8")
-    assert catalog["voice_count"] == 52
-    assert catalog["model_file_count"] == 47
+    assert catalog["voice_count"] == 54
+    assert catalog["model_file_count"] == 49
     assert catalog["status"] == "ready"
     for voice in catalog["voices"]:
         assert f"`{voice['id']}`" in text
@@ -26,7 +26,7 @@ def test_voices_route_returns_the_registry() -> None:
         response = client.get("/v1/voices")
     assert response.status_code == 200
     body = response.json()
-    assert body["voice_count"] == 52
+    assert body["voice_count"] == 54
     assert body["installed_count"] == 0
     assert body["styles"]["companion"]["length_scale"] == 1.16
     ids = {voice["id"] for voice in body["voices"]}

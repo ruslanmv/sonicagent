@@ -32,7 +32,8 @@ import json
 import threading
 import time
 from collections import deque
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterator
+from dataclasses import dataclass
 from uuid import uuid4
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -124,6 +125,39 @@ async def speech_stream(websocket: WebSocket, session_id: str) -> None:
         websocket.app.state.speech_streams.release(session_id)
 
 
+_Chunk = tuple[int, bytes, float]  # sample rate, PCM16, seconds spent synthesizing it
+
+
+def _pull(iterator: Iterator[tuple[int, bytes]]) -> _Chunk | None:
+    started = time.perf_counter()
+    try:
+        rate, pcm = next(iterator)
+    except StopIteration:
+        return None
+    return rate, pcm, time.perf_counter() - started
+
+
+def _pull_ahead(iterator: Iterator[tuple[int, bytes]]) -> asyncio.Future[_Chunk | None]:
+    """Synthesize the iterator's next sentence in a worker thread, starting now."""
+    future = asyncio.ensure_future(asyncio.to_thread(_pull, iterator))
+    future.add_done_callback(_retrieved)
+    return future
+
+
+def _retrieved(future: asyncio.Future[_Chunk | None]) -> None:
+    # A lookahead abandoned by a cancel may finish with ``Cancelled``; nobody awaits it.
+    if not future.cancelled():
+        future.exception()
+
+
+@dataclass
+class _Lookahead:
+    turn_id: str
+    iterator: Iterator[tuple[int, bytes]]
+    first: asyncio.Future[_Chunk | None]
+    stop: threading.Event
+
+
 class _Slot:
     """One kind of work (recognition or synthesis): its task and its cancellation."""
 
@@ -201,6 +235,9 @@ class _Stream:
         self.unplayed: dict[str, list[float]] = {}
         self.last_ack_at: float | None = None
         self.current_tts: str | None = None
+        # Lookahead: the next queued phrase, its synthesis already started while the current
+        # phrase's last frames are still being paced out. See ``_Lookahead``.
+        self.lookahead: _Lookahead | None = None
 
     # ── Control events ───────────────────────────────────────────────
 
@@ -231,6 +268,7 @@ class _Stream:
             self.tts.cancel()
             self.stt_pending.clear()
             self.tts_pending.clear()
+            self._drop_lookahead()
             await self.emit({"type": "session.closed"})
             return True
         elif kind == "tts.speak":
@@ -261,6 +299,7 @@ class _Stream:
         if target in ("all", "tts"):
             self.tts.cancel()
             self.tts_pending.clear()
+            self._drop_lookahead()
             self._forget_playback()
         if target in ("all", "stt"):
             self.stt.cancel()
@@ -336,17 +375,32 @@ class _Stream:
         self.tts.task = asyncio.create_task(self._speak_then_next(text, turn_id, voice, cancellation, stop))
 
     async def _speak_then_next(
-        self, text: str, turn_id: str, voice: str, cancellation: CancellationToken, stop: threading.Event
+        self,
+        text: str,
+        turn_id: str,
+        voice: str,
+        cancellation: CancellationToken,
+        stop: threading.Event,
+        ahead: _Lookahead | None = None,
     ) -> None:
-        await self._speak(text, turn_id, voice, cancellation, stop)
+        await self._speak(text, turn_id, voice, cancellation, stop, ahead)
         if cancellation.cancelled or stop.is_set() or not self.tts_pending:
             return
         next_text, next_turn, next_voice = self.tts_pending.popleft()
         # Started from inside the finishing task: the slot is handed straight
         # over, so no ``tts.speak`` arriving in between can jump the queue.
         cancellation, stop = self.tts.fresh()
+        ahead = self.lookahead
+        if ahead is not None and ahead.turn_id != next_turn:
+            self._drop_lookahead()
+            ahead = None
+        if ahead is not None:
+            # Its synthesis began during the previous phrase: it keeps the stop event it was
+            # started with, which is now the slot's, so a cancel still reaches its thread.
+            self.lookahead = None
+            stop = self.tts.stop = ahead.stop
         self.tts.task = asyncio.create_task(
-            self._speak_then_next(next_text, next_turn, next_voice, cancellation, stop)
+            self._speak_then_next(next_text, next_turn, next_voice, cancellation, stop, ahead)
         )
 
     async def _on_warm(self, event: dict[str, object]) -> None:
@@ -609,7 +663,13 @@ class _Stream:
     # ── Synthesis ────────────────────────────────────────────────────
 
     async def _speak(
-        self, text: str, turn_id: str, voice: str, cancellation: CancellationToken, stop: threading.Event
+        self,
+        text: str,
+        turn_id: str,
+        voice: str,
+        cancellation: CancellationToken,
+        stop: threading.Event,
+        ahead: _Lookahead | None = None,
     ) -> None:
         settings = self.settings
         frame_ms = int(self.options.output_frame_ms)
@@ -636,32 +696,32 @@ class _Stream:
                 "cold": cold,
             }
         )
-        iterator = iter(
-            iter_pcm16(
-                engine,
-                text,
-                voice=voice,
-                language=self.session.language,
-                cancel=stop,
+        if ahead is not None:
+            iterator, pending = ahead.iterator, ahead.first
+        else:
+            iterator = iter(
+                iter_pcm16(engine, text, voice=voice, language=self.session.language, cancel=stop)
             )
-        )
-
-        def pull() -> tuple[int, bytes] | None:
-            try:
-                return next(iterator)
-            except StopIteration:
-                return None
+            pending = _pull_ahead(iterator)
 
         try:
             while True:
                 if cancellation.cancelled or stop.is_set():
                     return
-                t_pull = time.perf_counter()
-                chunk = await asyncio.to_thread(pull)
-                synth_s += time.perf_counter() - t_pull
+                chunk = await pending
                 if chunk is None:
                     break
-                rate, pcm = chunk
+                rate, pcm, took = chunk
+                synth_s += took
+                # Lookahead. Piper renders a whole sentence before the first sample of it exists,
+                # and pacing holds at most ``limit_ms`` of unplayed audio on the client. Pulling
+                # the next sentence only after this one's last frame was sent left the client
+                # ``limit_ms`` to cover a whole sentence's synthesis: a 6 s Italian sentence in a
+                # "high" voice on the 2-vCPU Space took longer, and the headset went silent
+                # mid-reply (measured: 261-627 ms gaps, Serena High). Synthesis of the next
+                # sentence now runs while this one is paced out; nothing is sent early, so the
+                # protocol, the budget and the size of a burst are unchanged.
+                pending = _pull_ahead(iterator)
                 if first_ms is None:
                     first_ms = round((time.perf_counter() - started) * 1000, 1)
                     await self.emit(
@@ -677,6 +737,7 @@ class _Stream:
                 for piece in split_frames(pcm, rate, frame_ms):
                     if cancellation.cancelled or stop.is_set():
                         return
+                    self._look_ahead(pending)
                     if limit_ms <= 0:
                         # A zero budget cannot hold even one frame: refuse, as v1 did.
                         await self._refuse_queue(turn_id, cancellation, stop, "outbound audio queue is full")
@@ -742,6 +803,29 @@ class _Stream:
             }
         )
 
+    def _look_ahead(self, pending: asyncio.Future[_Chunk | None]) -> None:
+        """This phrase has no sentence left: start the next queued phrase's synthesis now.
+
+        Phrases of a reply arrive as separate ``tts.speak`` events (one sentence each, as the
+        Avatar splits them), so the sentence lookahead alone stops at every phrase boundary.
+        The next phrase's first sentence is synthesized while this phrase's tail is paced out;
+        ``_speak_then_next`` hands it over with the stop event it was started with.
+        """
+        if self.lookahead is not None or not self.tts_pending or not pending.done():
+            return
+        if pending.cancelled() or pending.exception() is not None or pending.result() is not None:
+            return
+        text, turn_id, voice = self.tts_pending[0]
+        stop = threading.Event()
+        engine = self.websocket.app.state.tts
+        iterator = iter(iter_pcm16(engine, text, voice=voice, language=self.session.language, cancel=stop))
+        self.lookahead = _Lookahead(turn_id, iterator, _pull_ahead(iterator), stop)
+
+    def _drop_lookahead(self) -> None:
+        ahead, self.lookahead = self.lookahead, None
+        if ahead is not None:
+            ahead.stop.set()  # its thread stops at the next sentence; nothing was sent
+
     async def _wait_for_room(
         self,
         turn_id: str,
@@ -781,5 +865,6 @@ class _Stream:
     async def close(self) -> None:
         self.stt_pending.clear()
         self.tts_pending.clear()
+        self._drop_lookahead()
         await self.stt.drain()
         await self.tts.drain()

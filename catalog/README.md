@@ -1,6 +1,6 @@
 # Voice catalog
 
-This is the voice library SonicAgent can run. Every row is a selectable id in `model_registry/voices.json`. The audio files are the Piper voices in [`ruslanmv/hp-piper-voices`](https://huggingface.co/ruslanmv/hp-piper-voices). The voice image downloads every unique file at build time. The files are not stored in Git.
+This is the voice library SonicAgent can run. Every row is a selectable id in `model_registry/voices.json`. Every model file comes from [`ruslanmv/hp-piper-voices`](https://huggingface.co/ruslanmv/hp-piper-voices), the one source of truth for voice files. The voice image downloads each unique model and config at build time and checks it against the SHA-256 pinned here. The files are not stored in Git.
 
 `GET /v1/voices` returns this same library. `installed` is true only when that ONNX file and its config are on the machine answering the request.
 
@@ -29,10 +29,10 @@ A voice entry may carry its own `length_scale`, `noise_scale` and `noise_w_scale
 
 ## What is already included
 
-- **52 selectable voices.**
-- **47 ONNX files.** The voice image installs all of them from the mirror. Companion and Secretary ids that share a speaker do not download a second file.
+- **54 selectable voices.**
+- **49 ONNX files.** The voice image installs them from the sources pinned by the registry. Companion and Secretary ids that share a speaker do not download a second file.
 - **Languages:** English (US), English (UK), Spanish (Spain), Spanish (Mexico), Spanish (Argentina), French, German, Italian, Portuguese.
-- **License:** MIT for every voice from the Piper voice projects, except two speakers whose model card names another licence: **Serena** (`it_IT-serena-*`) is **CC-BY-4.0** (dataset `committa/serena-synthetic-it-27h`, synthetic Italian speech) and **Daniela** (`es_AR-daniela-high`) is **CC-BY-SA-4.0** (dataset OpenSLR 61). Both require attribution; the `attribution` field in `voices.json` carries the line to show, and the `MODEL_CARD` sits beside each ONNX on the mirror.
+- **License:** MIT for every voice from the Piper voice projects, with these exceptions: **Serena** (`it_IT-serena-*`) is **CC-BY-4.0** (dataset `committa/serena-synthetic-it-27h`, synthetic Italian speech) and **Daniela** (`es_AR-daniela-high`) is **CC-BY-SA-4.0** (dataset OpenSLR 61). **Aurora** and **Giorgio** are **CC-BY-4.0** (Piper Italiano, trained on Multilingual LibriSpeech). The `attribution` field in `voices.json` records whom to credit.
 - Portuguese in this mirror is Edresson and Faber. Both are male. There is no female Portuguese voice to assign to Companion or Secretary.
 
 ## Voices
@@ -124,6 +124,8 @@ A voice entry may carry its own `length_scale`, `noise_scale` and `noise_w_scale
 | `it_IT-paola-companion` | Paola | companion | female | medium | Adult companion. Warmer and slower. | No higher quality of this speaker is in the mirror. Same file as it_IT-paola-medium. |
 | `it_IT-paola-medium` | Paola | secretary | female | medium | Work. Clearer and a little faster. | No higher quality of this speaker is in the mirror. Same file as it_IT-paola-companion. |
 | `it_IT-riccardo-x_low` | Riccardo | catalog | male | x_low | Published male speaker. | No higher quality of this speaker is in the mirror. |
+| `it_IT-aurora-medium` | Aurora | catalog | female | medium | Italian speaker trained from scratch. CC-BY-4.0. | — |
+| `it_IT-giorgio-high` | Giorgio | catalog | male | high | Italian speaker fine-tuned from Leonardo. CC-BY-4.0. | — |
 | `it_IT-serena-medium` | Serena | catalog | female | medium | Second Italian female speaker. Her own settings (0.6 / 0.4). CC-BY-4.0. | Same speaker also has high. |
 | `it_IT-serena-high` | Serena | catalog | female | high | Second Italian female speaker. Her own settings (0.6 / 0.4). CC-BY-4.0. | Highest quality published for this speaker. |
 
@@ -137,13 +139,13 @@ A voice entry may carry its own `length_scale`, `noise_scale` and `noise_w_scale
 ## How to upgrade later
 
 1. Prefer a higher Piper quality when the mirror publishes one for the same speaker. Amy, Ryan, and Siwis already have a lower file and a medium file. Use medium unless you need the smaller file. `es_MX-claude-high`, `es_AR-daniela-high` and `it_IT-serena-high` are the `high` files in this mirror.
-2. Add a new speaker by putting the ONNX and config on `ruslanmv/hp-piper-voices`, pinning both sha256 values in `model_registry/voices.json`, and rebuilding the voice image. The image downloads the new file. Do not commit the ONNX into this repository.
-3. A dedicated explicit or seductive model is a step 2 addition. It is not hidden in the current 47 files.
+2. Add a new speaker by putting the ONNX and config on `ruslanmv/hp-piper-voices`, pinning both sha256 values in `model_registry/voices.json`, and rebuilding the voice image. Mirror the files first: the registry names no other source (`hf/tests/test_setup_models.py` enforces it). The image downloads the new files. Do not commit the ONNX into this repository.
+3. A dedicated explicit or seductive model is a step 2 addition. It is not hidden in the current 49 files.
 4. Do not relabel an unlabeled multi-speaker model, such as LibriTTS, Arctic, or MLS (German, and French `fr_FR-mls-medium`, 125 unlabeled speakers — left out for this reason), as a female companion. The speaker gender is not identified on those files.
 
 ## Checked against the mirror
 
-The 47 ONNX paths in `voices.json` are the 47 `.onnx` files in `ruslanmv/hp-piper-voices` at the time of this catalog. Serena and Daniela were copied from `rhasspy/piper-voices` main at `e7229f7` (Serena was added after the `v1.0.0` tag), with their `MODEL_CARD`s. Four files are selected by more than one id:
+All 49 ONNX paths in `voices.json` come from `ruslanmv/hp-piper-voices`. Aurora and Giorgio were copied byte for byte from [Piper Italiano](https://huggingface.co/kirys79/piper_italiano) at `37020d3` (Giorgio renamed from `giorgio-epoch=5028-step=1098436.*` to `it_IT-giorgio-high.onnx` / `.onnx.json`), with a `MODEL_CARD` each carrying the CC BY 4.0 credit. Serena and Daniela were copied from `rhasspy/piper-voices` main at `e7229f7` (Serena was added after the `v1.0.0` tag), with their `MODEL_CARD`s. Four files are selected by more than one id:
 
 - `es/es_ES/sharvard/medium/es_ES-sharvard-medium.onnx`: `es_ES-sharvard-companion`, `es_ES-sharvard-secretary`, `es_ES-sharvard-male`
 - `es/es_MX/ald/medium/es_MX-ald-medium.onnx`: `es_MX-ald-companion`, `es_MX-ald-medium`

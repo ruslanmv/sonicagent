@@ -45,6 +45,8 @@ def test_speak_panel_has_ready_examples_and_autoplay():
         "de_DE-kerstin-low",
         "it_IT-paola-companion",
         "it_IT-paola-medium",
+        "it_IT-aurora-medium",
+        "it_IT-giorgio-high",
     ):
         sample = examples / f"{voice}.wav"
         assert sample.is_file(), voice

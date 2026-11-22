@@ -1,0 +1,183 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Italian streaming bench</title>
+<script>
+    // Bench setup, before any app module loads: OllaBridge pairing (the bench gateway) and
+    // remote voice switched on. Everything after this is the app's own code, unmodified.
+    localStorage.setItem(
+        'nexus_llm_settings',
+        JSON.stringify({ ollabridge: { base_url: 'http://127.0.0.1:' + (new URLSearchParams(location.search).get('ob') || '8702'), pair_token: 'bench-device-token' } })
+    );
+    localStorage.setItem(
+        'nexus_sonic_voice',
+        JSON.stringify(Object.assign({ enabled: true, consent: false, ttsLanguage: 'it-IT', language: 'it-IT' },
+            JSON.parse(new URLSearchParams(location.search).get('cfg') || '{}')))
+    );
+    localStorage.setItem('speech_lang', 'it-IT');
+    // Quest Browser runs its context at 48 kHz; headless Chromium defaults to 44.1 kHz here.
+    const RealAC = window.AudioContext;
+    window.AudioContext = class extends RealAC {
+        constructor(o) {
+            super(Object.assign({ sampleRate: 48000 }, o || {}));
+        }
+    };
+    // Gap tap: the worklet says `underrun` when its queue empties mid-turn; the next `push`
+    // from the page ends the starvation. Their distance is the audible gap.
+    window.__gaps = [];
+    window.__pushes = 0;
+    const RealNode = window.AudioWorkletNode;
+    window.AudioWorkletNode = class extends RealNode {
+        constructor(...a) {
+            super(...a);
+            let starvedAt = null;
+            this.port.addEventListener('message', (e) => {
+                const m = e.data || {};
+                if (m.type === 'underrun') starvedAt = performance.now();
+                if (m.type === 'drained') starvedAt = null;
+            });
+            const post = this.port.postMessage.bind(this.port);
+            this.port.postMessage = (msg, tr) => {
+                if (msg && msg.type === 'push') {
+                    window.__pushes++;
+                    if (starvedAt != null) {
+                        window.__gaps.push({ at: performance.now(), ms: performance.now() - starvedAt });
+                        starvedAt = null;
+                    }
+                }
+                if (msg && msg.type === 'clear') starvedAt = null;
+                return post(msg, tr);
+            };
+        }
+    };
+</script>
+<script src="src/SpeechTextNormalizer.js"></script>
+<script src="src/stt/SpeechAudio.js"></script>
+<script src="src/stt/SonicAgentVoiceConfig.js"></script>
+<script src="src/stt/StreamingSttSession.js"></script>
+<script src="src/stt/RemoteSttEvents.js"></script>
+<script src="src/tts/AudioJitterBuffer.js"></script>
+<script src="src/tts/StreamingAudioPlayer.js"></script>
+<script src="src/tts/PhraseSpeechScheduler.js"></script>
+<script src="src/tts/VoiceTurnController.js"></script>
+<script src="src/tts/RemoteSonicAgentTTS.js"></script>
+<script src="src/tts/VoiceLibrary.js"></script>
+<script src="src/tts/VoiceSelectionPolicy.js"></script>
+<script>
+    // Per phrase: the exact PCM SonicAgent delivered, for offline listening checks.
+    window.__frames = [];
+    window.__events = [];
+    function tapLink() {
+        const l = NEXUS_SONIC_STREAM.shared();
+        if (l.__tapped) return;
+        l.__tapped = true;
+        l.on('audio', (f) =>
+            __frames.push({ t: performance.now(), seq: f.sequence, rate: f.sampleRate, b64: b64(f.payload) })
+        );
+        l.on('event', (ev) => __events.push(Object.assign({ t: performance.now() }, ev)));
+    }
+    function b64(buf) {
+        const u = new Uint8Array(buf.buffer ? buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) : buf);
+        let s = '';
+        for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+        return btoa(s);
+    }
+    const tts = () => NEXUS_REMOTE_TTS.shared();
+    /** One reply through the provider's speak(): the path the Quest uses by default. */
+    window.benchSpeak = (text, voiceId, opts) =>
+        new Promise((resolve) => {
+            const o = opts || {};
+            __gaps = [];
+            __frames = [];
+            __events = [];
+            const t0 = performance.now();
+            const out = { t0, onStart: null, onEnd: null, error: null };
+            let stopTimer = null;
+            tts()
+                .speak(text, {
+                    voiceId,
+                    onStart: () => {
+                        out.onStart = performance.now() - t0;
+                        if (o.stopAfterMs != null)
+                            stopTimer = setTimeout(() => {
+                                out.stopAt = performance.now() - t0;
+                                tts().stop();
+                                resolve(collect(out));
+                            }, o.stopAfterMs);
+                    },
+                    onEnd: () => {
+                        out.onEnd = performance.now() - t0;
+                        if (stopTimer) clearTimeout(stopTimer);
+                        setTimeout(() => resolve(collect(out)), 50);
+                    },
+                    onError: (e) => {
+                        out.error = (e && (e.code + ': ' + e.message)) || String(e);
+                        resolve(collect(out));
+                    },
+                })
+                .then(() => tapLink());
+            tapLink();
+        });
+    /** HV5: the reply arrives as LLM tokens at `tokMs` per word; phrases go out as they close. */
+    // The reply's voice comes from the app's Auto policy, which honours an explicit pick only
+    // once the voice library is known (the app loads it at engine init). Load it first, or
+    // streamReply silently speaks the locale preset (Paola) instead of the voice under test.
+    window.benchStream = async (text, voiceId, tokMs) => {
+        await tts().refreshLibrary(true);
+        return benchStreamTurn(text, voiceId, tokMs);
+    };
+    const benchStreamTurn = (text, voiceId, tokMs) =>
+        new Promise((resolve) => {
+            __gaps = [];
+            __frames = [];
+            __events = [];
+            const cfg = JSON.parse(localStorage.getItem('nexus_sonic_voice'));
+            cfg.voice = voiceId;
+            localStorage.setItem('nexus_sonic_voice', JSON.stringify(cfg));
+            const t0 = performance.now();
+            const out = { t0, onStart: null, onEnd: null, error: null };
+            const r = tts().streamReply({
+                onStart: () => (out.onStart = performance.now() - t0),
+                onEnd: () => {
+                    out.onEnd = performance.now() - t0;
+                    setTimeout(() => resolve(collect(out)), 50);
+                },
+                onError: (e) => {
+                    out.error = (e && (e.code + ': ' + e.message)) || String(e);
+                    resolve(collect(out));
+                },
+            });
+            tapLink();
+            const words = text.split(/(?<=\s)/);
+            let i = 0;
+            const tick = () => {
+                if (i < words.length) {
+                    r.push(words[i++]);
+                    setTimeout(tick, tokMs);
+                } else {
+                    out.llmDoneAt = performance.now() - t0;
+                    r.finish(text);
+                }
+            };
+            tick();
+        });
+    function collect(out) {
+        return Object.assign(out, {
+            stats: tts().lastStats(),
+            gaps: __gaps.slice(),
+            events: __events.map((e) => {
+                const c = Object.assign({}, e);
+                c.t -= out.t0;
+                return c;
+            }),
+            frames: __frames.map((f) => ({ t: f.t - out.t0, seq: f.seq, rate: f.rate, b64: f.b64 })),
+            playerKind: NEXUS_STREAM_PLAYER.shared().kind(),
+        });
+    }
+    window.benchWarm = (v) => tts().warm(v);
+    window.benchInit = () => tts().init();
+</script>
+</head>
+<body>bench</body>
+</html>
