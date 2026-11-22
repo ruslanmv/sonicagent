@@ -48,7 +48,7 @@ fi
 if ! curl -s -m 2 "http://127.0.0.1:$OB_PORT/health" >/dev/null; then
     OLLAMBRIDGE_VOICE_MODE=huggingface OLLAMBRIDGE_VOICE_BASE_URL=http://127.0.0.1:$SA_PORT \
         OLLAMBRIDGE_VOICE_API_KEY=$KEY OLLAMBRIDGE_VOICE_ALLOWED_ORIGINS=$ORIGIN CORS_ORIGINS=$ORIGIN \
-        setsid "$OLLABRIDGE_DIR/.venv/bin/python" "$HERE/ollabridge_bench.py" \
+        DATABASE_URL=sqlite:///$WORK/ollabridge-bench.db setsid "$OLLABRIDGE_DIR/.venv/bin/python" "$HERE/ollabridge_bench.py" \
         </dev/null >"$WORK/logs/ollabridge.log" 2>&1 &
     sleep 8
 fi

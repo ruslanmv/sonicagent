@@ -136,7 +136,12 @@ def transcribe(path):
         from faster_whisper import WhisperModel
 
         model = WhisperModel("small", device="cpu", compute_type="int8", cpu_threads=2)
-    segs, _ = model.transcribe(str(path), language="it", beam_size=5, vad_filter=False)
+    # Decoded here, not by faster-whisper: its file path goes through PyAV, whose 19.x `open()`
+    # dropped an argument faster-whisper 1.2 still passes. Whisper wants 16 kHz mono float32.
+    x, rate = read(path)
+    t = np.arange(0, len(x) / rate, 1 / 16000)
+    audio = np.interp(t, np.arange(len(x)) / rate, x).astype(np.float32)
+    segs, _ = model.transcribe(audio, language="it", beam_size=5, vad_filter=False)
     return " ".join(s.text.strip() for s in segs)
 
 
