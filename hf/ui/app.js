@@ -341,6 +341,7 @@
     if (pending && pending.then) pending.then(markCards).catch(function(){ S.playingId=""; markCards(); });
     else markCards();
   }
+  var PREVIEWS_V="2";
   var FILTERS=[["all","All"],["companion","Companion"],["secretary","Secretary"],["female","Female"],["male","Male"]];
   var GROUPS=["Companion","Secretary","More female voices","More male voices","Other speakers"];
   function accentTerms(localeId) {
@@ -462,7 +463,9 @@
     primePlayback();
     S.playingId=voice.id;
     chooseVoice(voice.id);
-    var url="/ui-assets/examples/"+voice.id+".wav";
+    // Previews are fetched with force-cache, so a regenerated WAV needs a new URL: bump
+    // PREVIEWS_V whenever a file in hf/ui/examples changes (Aurora's was replaced 2026-11-22).
+    var url="/ui-assets/examples/"+voice.id+".wav?v="+PREVIEWS_V;
     fetch(url,{cache:"force-cache"}).then(function(response){
       if (!response.ok) throw new Error("missing");
       return response.blob();

@@ -72,7 +72,8 @@ HF_TOKEN=… python hf/scripts/space-deploy.py --push --check it_IT-aurora-mediu
 stage is deleted: read the preview. The build takes ~2–3 minutes. The public
 demo is off (`/demo/speech` → 403), so synthesis is tested by a person in Voice
 Studio's token mode. Bump `?v=` in `hf/ui/index.html` when `app.js` or
-`style.css` change.
+`style.css` change, and `PREVIEWS_V` in `app.js` when a preview WAV changes
+(previews are fetched with `force-cache`; same URL = the old recording).
 
 ## Italian voices on the Quest path (measured 2026-11-22)
 
