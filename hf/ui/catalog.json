@@ -218,7 +218,8 @@
           "id": "es_AR-daniela-high",
           "label": "Daniela",
           "role": "catalog",
-          "sample": "Hola. Esta es una voz en español."
+          "sample": "Hola. Esta es una voz en español.",
+          "attribution": "Daniela by larcanio (rhasspy/piper-voices), dataset OpenSLR 61, CC-BY-SA-4.0"
         }
       ]
     },
@@ -338,25 +339,29 @@
           "id": "it_IT-aurora-medium",
           "label": "Aurora · female",
           "role": "catalog",
-          "sample": "Ciao. Questa è una voce italiana."
+          "sample": "Ciao. Questa è una voce italiana.",
+          "attribution": "Aurora by kirys79 (https://huggingface.co/kirys79/piper_italiano), trained on Multilingual LibriSpeech Italian speaker 6807 (https://www.openslr.org/94/), CC BY 4.0"
         },
         {
           "id": "it_IT-giorgio-high",
           "label": "Giorgio · male",
           "role": "catalog",
-          "sample": "Ciao. Questa è una voce italiana."
+          "sample": "Ciao. Questa è una voce italiana.",
+          "attribution": "Giorgio by kirys79 (https://huggingface.co/kirys79/piper_italiano), trained on Multilingual LibriSpeech Italian speaker 8181 (https://www.openslr.org/94/), CC BY 4.0"
         },
         {
           "id": "it_IT-serena-medium",
           "label": "Serena · female",
           "role": "catalog",
-          "sample": "Ciao. Questa è una voce italiana."
+          "sample": "Ciao. Questa è una voce italiana.",
+          "attribution": "Serena by Committa (rhasspy/piper-voices), dataset committa/serena-synthetic-it-27h, CC-BY-4.0"
         },
         {
           "id": "it_IT-serena-high",
           "label": "Serena (high quality) · female",
           "role": "catalog",
-          "sample": "Ciao. Questa è una voce italiana."
+          "sample": "Ciao. Questa è una voce italiana.",
+          "attribution": "Serena by Committa (rhasspy/piper-voices), dataset committa/serena-synthetic-it-27h, CC-BY-4.0"
         }
       ]
     },

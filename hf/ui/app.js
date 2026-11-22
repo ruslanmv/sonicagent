@@ -366,7 +366,7 @@
     else if (role==="secretary") { group="Secretary"; note="Clearer, for work"; }
     else if (gender==="female") { group="More female voices"; note="Published female speaker"; }
     else if (gender==="male") { group="More male voices"; note="Published male speaker"; }
-    return {id:voice.id,label:label,name:label.split(" · ")[0],role:role,gender:gender,group:group,note:note,sample:voice.sample || "",locale:locale.id,localeLabel:locale.label,accent:accentTerms(locale.id)};
+    return {id:voice.id,label:label,name:label.split(" · ")[0],role:role,gender:gender,group:group,note:note,sample:voice.sample || "",attribution:voice.attribution || "",locale:locale.id,localeLabel:locale.label,accent:accentTerms(locale.id)};
   }
   function voiceHay(voice) {
     return [voice.name,voice.label,voice.group,voice.gender,voice.note,voice.localeLabel,voice.accent].join(" ").toLowerCase();
@@ -497,6 +497,14 @@
     note.textContent=voice.note;
     main.append(title, tags, note);
     main.addEventListener("click", function(){ chooseVoice(voice.id); });
+    // CC BY / CC BY-SA voices (Serena, Daniela, Aurora, Giorgio) must credit their authors
+    // wherever they are offered; the line is the registry's own attribution, links included.
+    if (voice.attribution) {
+      var body=document.createElement("div");
+      body.className="voice-body";
+      body.append(main, creditLine(voice.attribution));
+      main=body;
+    }
     var play=document.createElement("button");
     play.type="button";
     play.className="voice-play";
@@ -506,6 +514,20 @@
     play.addEventListener("click", function(){ playVoice(voice); });
     card.append(main, play);
     return card;
+  }
+  function creditLine(text) {
+    var line=document.createElement("span");
+    line.className="voice-credit";
+    String(text).split(/(https?:\/\/[^\s)]+)/).forEach(function(part, i){
+      if (!part) return;
+      if (i % 2) {
+        var a=document.createElement("a");
+        a.href=part; a.target="_blank"; a.rel="noopener noreferrer";
+        a.textContent=part.replace(/^https?:\/\//,"");
+        line.append(a);
+      } else line.append(document.createTextNode(part));
+    });
+    return line;
   }
   function renderFilters() {
     E.voiceFilters.replaceChildren();
