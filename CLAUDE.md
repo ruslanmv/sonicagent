@@ -83,7 +83,7 @@ headset). Medians, ms to first audible sample:
 | Voice         | Cold | Warm short · medium · numbers · long | RTF   | Gaps                       | Notes                                                    |
 | ------------- | ---- | ------------------------------------ | ----- | -------------------------- | -------------------------------------------------------- |
 | Paola Medium  | 1071 | 107 · 296 · 473 · 129                | 0.056 | none                       | clear; reads "dott." badly                               |
-| Serena High   | 1680 | 403 · 1298 · 2090 · 576              | 0.246 | 45–627 ms at phrase joins  | best prosody; ~5× slower, the only real "high" model     |
+| Serena High   | 1680 | 403 · 1298 · 2090 · 576              | 0.246 | 45–627 ms (fixed, below)   | best prosody; ~5× slower, the only real "high" model     |
 | Aurora Medium | 963  | 125 · 382 · 528 · 185                | 0.045 | none                       | worst ASR, long mid-sentence pauses (40 s vs 26 s)       |
 | Giorgio High  | 879  | 94 · 352 · 542 · 166                 | 0.049 | none                       | medium-size model despite "high"; clear, slow            |
 
@@ -93,9 +93,12 @@ What the numbers mean for changes:
   so it scales with the first sentence's length × RTF.
 - Gaps: the next phrase used to be synthesized only after the current phrase's
   last frame was sent, with `max_outbound_queue_ms` (2000) of audio left on the
-  client. Do not just raise the budget: OllaBridge's relay queue holds 64
-  messages and closes the socket (1013) when full. See the `tts-lookahead`
-  change and its tests in `tests/unit/test_speech_stream_hardening.py`.
+  client. Fixed by synthesizing one sentence/phrase ahead while pacing
+  (`_look_ahead`, `_pull_ahead` in `speech_endpoint.py`; tests in
+  `tests/unit/test_speech_stream_hardening.py`): Serena High on one core went
+  from 30 underruns to 1. Do not raise the budget instead: OllaBridge's relay
+  queue holds 64 messages and closes the socket (1013) when full.
+- Report: `benchmarks/reports/quest3-italian-streaming.md`.
 - Italian text goes to espeak-ng unchanged: `12,50 €` → "dodici virgola
   cinquanta euro", `24/12/2026` → "… barra …", `l'1 maggio` → "elle uno",
   `°C` → "gradi ci", `dott.` ends a sentence. Same for every voice

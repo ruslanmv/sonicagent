@@ -71,6 +71,8 @@ Piper's sentence iterator yields one PCM16 buffer per sentence. The socket sends
 
 `SONIC_MAX_OUTBOUND_QUEUE_MS` bounds audio sent and **not yet played**, for the whole session — queued phrases share one budget, because they share one playback buffer on the client. When the client is that far ahead, the server waits before sending the next frame; it does not end the turn. Without acknowledgements, "played" is estimated as wall-clock time since the first frame. Before HV3 the counter added every frame ever sent and never subtracted, so with the default 2000 ms every reply longer than two seconds ended in `rate_limited` ("outbound audio queue is full") after exactly 100 frames. A value of `0` still refuses at once, as it always did.
 
+**Synthesis runs ahead of pacing.** While a phrase's frames wait for room, the server already synthesizes the next Piper sentence and, once the phrase has no sentence left, the first sentence of the next queued `tts.speak`. Nothing is sent early: the budget, the frame order and the events are unchanged. Before this, the next sentence was only started after the current one's last frame was sent, when the client held just the budget, so a sentence that took longer than that to synthesize (Serena High on the 2-vCPU Space) left silence mid-reply. A cancel stops the lookahead's synthesis with the turn. Measured in `benchmarks/reports/quest3-italian-streaming.md`.
+
 ## Negotiated options (HV3)
 
 `POST /v1/audio/stream-sessions` accepts an optional `stream_options` object. Omit it and the session is the v1 behaviour above, byte for byte. Unknown keys and values are refused with 400 rather than ignored. The response and `session.ready` echo the options in force as `options`, and the response lists `options_supported`.

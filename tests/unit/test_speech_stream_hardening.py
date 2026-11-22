@@ -21,7 +21,7 @@ from sonicagent_rt.protocol.binary_frame import BinaryAudioFrame, decode_frame
 from sonicagent_rt.protocol.constants import FLAG_END_OF_UTTERANCE, Codec, MessageType
 from sonicagent_rt.speech_stream import store as store_module
 from sonicagent_rt.speech_stream.store import SpeechStreamSession, SpeechStreamStore, StreamOptions
-from sonicagent_rt.stt.errors import InvalidRequest, RateLimited, Unauthenticated
+from sonicagent_rt.stt.errors import Cancelled, InvalidRequest, RateLimited, Unauthenticated
 from sonicagent_rt.tts.base import TtsStatus
 from tests.unit.test_speech_stream import GatedTts, _collect, _create, _speech_settings, _url
 from tests.unit.test_voice_api import BlockingStt, FakeStt, client_for
@@ -486,3 +486,116 @@ def test_the_threading_event_is_still_what_engines_watch() -> None:
     assert isinstance(stop, threading.Event)
     slot.cancel()
     assert stop.is_set() and slot.task is None
+
+
+# ── Lookahead: synthesis overlaps pacing ─────────────────────────────
+
+
+class TimedTts:
+    """Each sentence (split on ". ") takes ``synth`` s to make and yields ``seconds`` of audio.
+
+    Records when each sentence's synthesis started and ended, and the cancel event it got.
+    """
+
+    def __init__(self, seconds: float, synth: float, gate: threading.Event | None = None) -> None:
+        self.seconds = seconds
+        self.synth = synth
+        self.gate = gate
+        self.started: dict[str, float] = {}
+        self.ended: dict[str, float] = {}
+        self.cancels: dict[str, object] = {}
+
+    def describe(self) -> TtsStatus:
+        return TtsStatus(True, True, ("en_US-lessac-medium",), None)
+
+    def iter_pcm(self, text: str, *, voice: str, language: str | None, cancel: object):
+        del voice, language
+        for sentence in text.split(". "):
+            self.cancels[sentence] = cancel
+            self.started[sentence] = time.monotonic()
+            if self.gate is not None and sentence.startswith("Gated"):
+                self.gate.wait(5)
+            time.sleep(self.synth)
+            if getattr(cancel, "is_set", lambda: False)():
+                raise Cancelled("synthesis was cancelled")
+            self.ended[sentence] = time.monotonic()
+            yield 16000, floats_to_pcm16([0.1] * int(16000 * self.seconds))
+
+
+def _speak_all(socket: object, turns: list[tuple[str, str]]) -> list[dict]:
+    for turn_id, text in turns:
+        socket.send_text(json.dumps({"type": "tts.speak", "text": text, "turn_id": turn_id}))
+    done, seen = 0, []
+    while done < len(turns):
+        message = socket.receive()
+        if message.get("text"):
+            event = json.loads(message["text"])
+            seen.append(event)
+            done += event["type"] == "tts.audio.done"
+    return seen
+
+
+def test_the_next_phrase_is_synthesized_while_this_one_is_paced_out() -> None:
+    # Measured on the Quest path (Serena High, 2-vCPU Space): the next phrase's synthesis only
+    # began after the current phrase's LAST frame was sent, when the client held just the
+    # 2000 ms budget — a sentence that took longer to synthesize left 261-627 ms of silence
+    # mid-reply. Here phrase A is 0.6 s of audio against a 100 ms budget, so its tail is paced
+    # out over ~0.5 s; B's synthesis must start during that, not after it.
+    engine = TimedTts(seconds=0.6, synth=0.1)
+    app = _app(max_outbound_queue_ms=100)
+    app.state.tts = engine
+    with TestClient(app) as client:
+        created = _create(client, mode="tts_only", stream_options={"tts_queue": True}).json()
+        with client.websocket_connect(_url(created)) as socket:
+            socket.receive_json()
+            seen = _speak_all(socket, [("a", "A"), ("b", "B")])
+    assert [e["turn_id"] for e in seen if e["type"] == "tts.audio.done"] == ["a", "b"]
+    assert engine.started["B"] - engine.ended["A"] < 0.25  # was ≥ ~0.45 (A's paced tail)
+    # Nothing is sent early: B's audio still follows A's done, in order, under one budget.
+    order = [
+        e["type"] + ":" + str(e.get("turn_id"))
+        for e in seen
+        if e["type"] in ("tts.started", "tts.audio.done")
+    ]
+    assert order == ["tts.started:a", "tts.audio.done:a", "tts.started:b", "tts.audio.done:b"]
+
+
+def test_the_next_sentence_of_a_phrase_is_synthesized_while_this_one_is_paced_out() -> None:
+    engine = TimedTts(seconds=0.6, synth=0.1)
+    app = _app(max_outbound_queue_ms=100)
+    app.state.tts = engine
+    with TestClient(app) as client:
+        created = _create(client, mode="tts_only", stream_options={"tts_queue": True}).json()
+        with client.websocket_connect(_url(created)) as socket:
+            socket.receive_json()
+            seen = _speak_all(socket, [("a", "One. Two")])
+    assert engine.started["Two"] - engine.ended["One"] < 0.25
+    done = next(e for e in seen if e["type"] == "tts.audio.done")
+    assert done["audio_ms"] == 1200 and done["frames"] == 60
+
+
+def test_a_cancel_discards_the_lookahead_and_stops_its_synthesis() -> None:
+    gate = threading.Event()
+    engine = TimedTts(seconds=0.6, synth=0.05, gate=gate)
+    app = _app(max_outbound_queue_ms=100)
+    app.state.tts = engine
+    with TestClient(app) as client:
+        created = _create(client, mode="tts_only", stream_options={"tts_queue": True}).json()
+        with client.websocket_connect(_url(created)) as socket:
+            socket.receive_json()
+            socket.send_text(json.dumps({"type": "tts.speak", "text": "A", "turn_id": "a"}))
+            socket.send_text(json.dumps({"type": "tts.speak", "text": "Gated B", "turn_id": "b"}))
+            deadline = time.monotonic() + 3
+            while "Gated B" not in engine.started and time.monotonic() < deadline:
+                socket.receive()  # A's frames; B's lookahead starts during them
+            assert "Gated B" in engine.started
+            socket.send_text(json.dumps({"type": "turn.cancel", "turn_id": "a", "target": "tts"}))
+            socket.send_text(json.dumps({"type": "tts.speak", "text": "C", "turn_id": "c"}))
+            events = []
+            while not any(e.get("type") == "tts.audio.done" and e.get("turn_id") == "c" for e in events):
+                message = socket.receive()
+                if message.get("text"):
+                    events.append(json.loads(message["text"]))
+            gate.set()
+    assert engine.cancels["Gated B"].is_set()  # its thread was told to stop
+    assert not any(e.get("turn_id") == "b" and e["type"] != "tts.queued" for e in events)
